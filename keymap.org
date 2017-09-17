@@ -1,0 +1,8 @@
+** Global navigation
+
+   - =v= Go to parent
+   - =b= Find child
+   - =g= Back
+   - =h= Forward
+   - =f= Previous sibling
+   - =j= Next sibling

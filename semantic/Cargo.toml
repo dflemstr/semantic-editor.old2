@@ -1,0 +1,7 @@
+[package]
+name = "semantic"
+version = "0.1.0"
+authors = ["David Flemström <david.flemstrom@gmail.com>"]
+publish = false
+
+[dependencies]

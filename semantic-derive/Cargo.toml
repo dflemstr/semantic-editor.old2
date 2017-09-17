@@ -1,0 +1,15 @@
+[package]
+authors = ["David Flemström <david.flemstrom@gmail.com>"]
+name = "semantic-derive"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+quote = "0.4.2"
+syn = "0.12.13"
+
+[dependencies.semantic]
+path = "../semantic"
+
+[lib]
+proc-macro = true
