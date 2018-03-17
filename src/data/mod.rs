@@ -1,5 +1,5 @@
 mod markdown;
 
-enum Content {
+enum Data {
     Markdown(markdown::Markdown),
 }

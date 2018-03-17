@@ -52,5 +52,7 @@ module.exports = function override(config, env) {
 
   config.plugins.push(new webpack.WatchIgnorePlugin([/target/]));
 
+  config.resolve.modules.push(path.resolve('./src'));
+
   return config;
 };

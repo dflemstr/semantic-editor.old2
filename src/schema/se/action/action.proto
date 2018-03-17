@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package se.action;
+
+import "se/data/format.proto";
+
+message Action {
+  oneof action {
+    LoadFileAction load_file = 1;
+  }
+}
+
+message LoadFileAction {
+  string path = 1;
+  se.data.Format format = 2;
+}

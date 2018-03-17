@@ -9,6 +9,7 @@ use futures;
 use prost;
 
 pub mod error;
+pub mod websocket;
 
 /// A descriptor for an available RPC service.
 pub trait ServiceDescriptor {
@@ -67,6 +68,7 @@ where
 /// This can be used to encode requests to a particular upstream service.
 pub trait Client {
     fn call(
+        &mut self,
         service_name: &str,
         method_name: &str,
         input: bytes::Bytes,

@@ -6,7 +6,15 @@ use std::fmt;
 fn main() {
     prost_build::Config::new()
         .service_generator(Box::new(ServiceGenerator))
-        .compile_protos(&["src/schema/se/service/service.proto"], &["src/schema"])
+        .compile_protos(
+            &[
+                "src/schema/se/action/action.proto",
+                "src/schema/se/data/format.proto",
+                "src/schema/se/service/service.proto",
+                "src/schema/se/websocket/websocket.proto",
+            ],
+            &["src/schema"],
+        )
         .unwrap();
 
     vergen::vergen(vergen::OutputFns::all()).unwrap();
@@ -76,7 +84,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
             ).unwrap();
             writeln!(
                 match_input_proto_type_methods,
-                "{}{:?}",
+                "{}{:?},",
                 case, method.input_proto_type
             ).unwrap();
             writeln!(
@@ -95,7 +103,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
                 Box::new(
                     ::futures::future::result(::rpc::decode(input))
                         .and_then(move |i| handler.{name}(i))
-                        .and_then(::rpc::encode))
+                        .and_then(::rpc::encode)),
 "#,
                 case,
                 name = method.name

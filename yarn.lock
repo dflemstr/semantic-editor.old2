@@ -36,6 +36,12 @@
   version "16.0.38"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-16.0.38.tgz#76617433ea10274505f60bb86eddfdd0476ffdc2"
 
+"@types/uuid@^3.4.3":
+  version "3.4.3"
+  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-3.4.3.tgz#121ace265f5569ce40f4f6d0ff78a338c732a754"
+  dependencies:
+    "@types/node" "*"
+
 abab@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/abab/-/abab-1.0.4.tgz#5faad9c2c07f60dd76770f71cf025b62a63cfd4e"
@@ -6654,13 +6660,14 @@ run-async@^2.2.0:
   dependencies:
     is-promise "^2.1.0"
 
-rust-native-wasm-loader@^0.6.5:
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/rust-native-wasm-loader/-/rust-native-wasm-loader-0.6.5.tgz#34bd1d99c538e544d377ffd1ba260e1c15d8aa2d"
+rust-native-wasm-loader@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/rust-native-wasm-loader/-/rust-native-wasm-loader-0.7.0.tgz#59605249b30f4df2be46fac1a96bbdcf7bd53dd4"
   dependencies:
     async-child-process "^1.1.1"
     fs-extra "^5.0.0"
     loader-utils "^1.1.0"
+    semver "^5.5.0"
 
 rx-lite-aggregates@^4.0.8:
   version "4.0.8"
@@ -6729,7 +6736,7 @@ semver-diff@^2.0.0:
   dependencies:
     semver "^5.0.3"
 
-"semver@2 || 3 || 4 || 5", semver@^5.0.1, semver@^5.0.3, semver@^5.1.0, semver@^5.3.0, semver@^5.4.1:
+"semver@2 || 3 || 4 || 5", semver@^5.0.1, semver@^5.0.3, semver@^5.1.0, semver@^5.3.0, semver@^5.4.1, semver@^5.5.0:
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.5.0.tgz#dc4bbc7a6ca9d916dee5d43516f0092b58f7b8ab"
 
@@ -7675,7 +7682,7 @@ uuid@^2.0.2:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-2.0.3.tgz#67e2e863797215530dff318e5bf9dcebfd47b21a"
 
-uuid@^3.0.0, uuid@^3.1.0:
+uuid@^3.0.0, uuid@^3.1.0, uuid@^3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.2.1.tgz#12c528bb9d58d0b9265d9a2f6f0fe8be17ff1f14"
 

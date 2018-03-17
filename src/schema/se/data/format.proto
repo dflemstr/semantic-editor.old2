@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package se.data;
+
+enum Format {
+  UNKNOWN = 0;
+  MARKDOWN = 1;
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package se.websocket;
+
+message Request {
+  bytes id = 1;
+  bytes data = 2;
+  string service_name = 3;
+  string method_name = 4;
+}
+
+message Response {
+  bytes id = 1;
+  bytes data = 2;
+}

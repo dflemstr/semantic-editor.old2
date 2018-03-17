@@ -2,18 +2,31 @@ syntax = "proto3";
 
 package se.service;
 
+import "se/action/action.proto";
+
 // The core editor API from a frontend point of view.
 service SemanticEditor {
-    // Perform any user-originating action on the editor instance.
-    rpc PerformAction (ActionRequest) returns (ActionResponse);
+  // Perform any user-originating action on the editor instance.
+  rpc PerformAction (ActionRequest) returns (ActionResponse);
+
+  // Stop-gap method for listing files
+  rpc ListFiles (ListFilesRequest) returns (ListFilesResponse);
 }
 
 // A request to perform an action originating from the user.
 message ActionRequest {
-
+  se.action.Action action = 1;
 }
 
 // A response to an action request.
 message ActionResponse {
+
+}
+
+message ListFilesRequest {
+
+}
+
+message ListFilesResponse {
 
 }

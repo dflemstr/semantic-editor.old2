@@ -33,17 +33,17 @@ impl log::Log for BrowserLog {
 
 #[wasm_bindgen]
 extern "C" {
-    pub type console;
+    type console;
 
     #[wasm_bindgen(static = console)]
-    pub fn log(s: &str);
+    fn log(s: &str);
 
     #[wasm_bindgen(static = console)]
-    pub fn info(s: &str);
+    fn info(s: &str);
 
     #[wasm_bindgen(static = console)]
-    pub fn warn(s: &str);
+    fn warn(s: &str);
 
     #[wasm_bindgen(static = console)]
-    pub fn error(s: &str);
+    fn error(s: &str);
 }

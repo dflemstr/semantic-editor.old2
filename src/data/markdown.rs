@@ -1,3 +1,7 @@
+use std::io;
+use pulldown_cmark;
+use error;
+
 #[derive(Semantic)]
 pub struct Markdown {
     pub children: Vec<Block>,
@@ -206,4 +210,13 @@ pub struct FootnoteDefinition {
 #[derive(Semantic)]
 pub struct Text {
     pub content: String,
+}
+
+impl Markdown {
+    fn read<R: io::Read>(mut read: R) -> error::Result<Self> {
+        let mut text = String::new();
+        read.read_to_string(&mut text)?;
+        let parser = pulldown_cmark::Parser::new(&text);
+        unimplemented!()
+    }
 }
