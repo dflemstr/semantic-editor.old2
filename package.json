@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/webassembly-js-api": "^0.0.1",
     "antd": "^3.2.1",
     "immutable": "^3.8.2",
     "react": "^16.2.0",
@@ -10,23 +11,35 @@
     "react-redux": "^5.0.7",
     "redux": "^3.7.2",
     "slate": "^0.32.4",
-    "slate-react": "^0.11.4"
+    "slate-react": "^0.11.4",
+    "uuid": "^3.2.1"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test --env=jsdom"
+    "start": "npm-run-all --parallel start:cargo start:react",
+    "start:cargo": "cargo watch -w src -x 'build --release --target=wasm32-unknown-unknown' -s scripts/run-wasm-gc -s scripts/run-wasm-bindgen -s scripts/run-wasm2es6js",
+    "start:react": "react-app-rewired start",
+    "build": "npm-run-all build:cargo build:wasm-gc build:wasm-bindgen build:react",
+    "build:cargo": "cargo build --release --target=wasm32-unknown-unknown",
+    "build:wasm-gc": "scripts/run-wasm-gc",
+    "build:wasm-bindgen": "scripts/run-wasm-bindgen",
+    "build:wasm2es6js": "scripts/run-wasm2es6js",
+    "build:react": "react-app-rewired build",
+    "test": "npm-run-all test:cargo test:react",
+    "test:cargo": "cargo test",
+    "test:react": "react-app-rewired test --env=jsdom"
   },
   "devDependencies": {
     "@types/jasmine": "^2.8.3",
     "@types/react": "^16.0.34",
     "@types/react-dom": "^16.0.3",
+    "@types/uuid": "^3.4.3",
     "babel-plugin-import": "^1.4.0",
     "file-loader": "^1.1.6",
+    "npm-run-all": "^4.1.2",
     "react-app-rewire-typescript": "^2.0.2",
     "react-app-rewired": "^1.2.9",
     "react-scripts": "^1.0.13",
-    "rust-native-wasm-loader": "^0.6.5",
+    "rust-native-wasm-loader": "^0.7.0",
     "ts-import-plugin": "^1.4.4",
     "typescript": "^2.6.2",
     "webpack": "^3.11.0"

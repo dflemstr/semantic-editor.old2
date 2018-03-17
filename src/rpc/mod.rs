@@ -9,9 +9,11 @@ use futures;
 use prost;
 
 pub mod error;
+pub mod websocket;
 
 /// A descriptor for an available RPC service.
 pub trait ServiceDescriptor {
+    /// The associated type of method descriptors.
     type Method: MethodDescriptor;
 
     /// The name of the service, used in Rust code and perhaps for human readability.
@@ -48,6 +50,7 @@ pub trait MethodDescriptor: Copy {
 /// A server implementation for a specific service descriptor.
 pub trait Server<A, S>
 where
+    A: Send,
     S: ServiceDescriptor + 'static,
 {
     /// Handles a particular method from the service.
@@ -59,18 +62,20 @@ where
         method: S::Method,
         handler: A,
         input: bytes::Bytes,
-    ) -> Box<futures::Future<Item = bytes::Bytes, Error = error::Error> + 'static>;
+    ) -> Box<futures::Future<Item = bytes::Bytes, Error = error::Error> + Send>;
 }
 
 /// A client implementation for a particular transport protocol.
 ///
 /// This can be used to encode requests to a particular upstream service.
 pub trait Client {
+    /// Perform a raw call to the specified service and method.
     fn call(
+        &mut self,
         service_name: &str,
         method_name: &str,
         input: bytes::Bytes,
-    ) -> Box<futures::Future<Item = bytes::Bytes, Error = error::Error> + 'static>;
+    ) -> Box<futures::Future<Item = bytes::Bytes, Error = error::Error> + Send>;
 }
 
 /// Efficiently decode a particular message type from a byte buffer.

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package se.websocket;
+
+// A WebSocket request frame.
+message Request {
+  // The correlation ID of the request.  The server is expected to send a response with the same ID.
+  bytes id = 1;
+  // The request data payload.
+  bytes data = 2;
+  // The RPC service being called.
+  string service_name = 3;
+  // The RPC method being called.
+  string method_name = 4;
+}
+
+// A WebSocket response frame.
+message Response {
+  // The correlation ID of the response.  This response is to the request with the matching ID.
+  bytes id = 1;
+  // The response data payload.
+  bytes data = 2;
+}

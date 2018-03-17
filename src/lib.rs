@@ -1,69 +1,76 @@
+//! The semantic editor is a versatile editor for different kinds of content.
+//!
+//! It edits content *semantically*.  You don't manipulate characters, but rather the structure of
+//! your content.  It is impossible to make syntax errors or break style guides.
+//!
+//! This program is in an early state of development!
+
 #![feature(conservative_impl_trait)]
+#![feature(generators)]
 #![feature(proc_macro)]
+#![cfg_attr(feature = "lint", feature(plugin))]
+#![cfg_attr(feature = "lint", plugin(clippy))]
+#![deny(missing_docs)]
+#![deny(missing_debug_implementations)]
+#![deny(missing_copy_implementations)]
+#![deny(trivial_casts)]
+#![deny(trivial_numeric_casts)]
+#![deny(unsafe_code)]
+#![deny(unused_import_braces)]
+#![deny(unused_qualifications)]
+#![deny(non_camel_case_types)]
 
 extern crate bytes;
 #[macro_use]
 extern crate error_chain;
-extern crate futures;
+extern crate failure;
+#[macro_use]
+extern crate failure_derive;
+extern crate futures_await as futures;
 #[macro_use]
 extern crate log;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
+extern crate pulldown_cmark;
 extern crate semantic;
 #[macro_use]
 extern crate semantic_derive;
+extern crate uuid;
 extern crate wasm_bindgen;
 
-pub mod browser_log;
+pub mod api;
+pub mod logger;
+pub mod data;
+pub mod error;
+pub mod schema;
+pub mod scheduler;
 pub mod rpc;
-pub mod content;
+mod version;
 
-/// The Protobuf-derived schema for interacting with the editor over different RPC mechanisms.
-mod schema {
-    #![allow(dead_code)]
-    include!(concat!(env!("OUT_DIR"), "/se.service.rs"));
+use futures::prelude::*;
+
+/// An instance of the semantic editor.
+#[derive(Debug)]
+pub struct SemanticEditor {
+    scheduler: scheduler::Scheduler,
+    rpc: rpc::websocket::WebSocketRpc,
 }
 
-/// Build version information.
-mod version {
-    #![allow(dead_code)]
-    include!(concat!(env!("OUT_DIR"), "/version.rs"));
-}
-
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-pub struct SemanticEditor {}
-
-#[wasm_bindgen]
-pub struct Action {}
-
-#[wasm_bindgen]
 impl SemanticEditor {
-    pub fn new() -> SemanticEditor {
-        SemanticEditor {}
+    /// Creates a new semantic editor with default options depending on the environment.
+    #[async]
+    pub fn new(
+        scheduler: scheduler::Scheduler,
+        url: String,
+    ) -> Result<SemanticEditor, error::Error> {
+        logger::init();
+        version::log();
+        let rpc = await!(rpc::websocket::WebSocketRpc::open(&url))?;
+        Ok(SemanticEditor { scheduler, rpc })
     }
 
-    pub fn init(&self) {
-        browser_log::init();
-        info!(
-            concat!(
-                "Initializing ",
-                env!("CARGO_PKG_NAME"),
-                " version ",
-                env!("CARGO_PKG_VERSION"),
-                "-{} created {} built {} running on {}"
-            ),
-            version::short_sha(),
-            version::commit_date(),
-            version::now(),
-            version::target()
-        );
-    }
-
-    pub fn perform(_action: Action) {}
-
+    /// (TEMP) Test document rendering
     pub fn document(&self) -> String {
         r#"{
     "nodes": [

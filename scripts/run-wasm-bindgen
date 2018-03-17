@@ -1,0 +1,2 @@
+#!/bin/sh
+wasm-bindgen target/wasm32-unknown-unknown/release/semantic_editor.wasm --typescript --nodejs-runtime-detect --out-dir src/wasm

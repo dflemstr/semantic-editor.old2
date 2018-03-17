@@ -5,17 +5,41 @@ publish = false
 version = "0.1.0"
 
 [build-dependencies]
-prost-build = "0.2.3"
 vergen = "0.1.1"
+
+[build-dependencies.prost-build]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
 
 [dependencies]
 bytes = "0.4.6"
 error-chain = "0.11.0"
+failure = "0.1.1"
+failure_derive = "0.1.1"
 futures = "0.1.18"
-log = "0.4.1"
-prost = "0.2.3"
-prost-derive = "0.2.3"
-prost-types = "0.2.3"
+futures-await = "0.1.0"
+pulldown-cmark = "0.1.2"
+uuid = "0.6.1"
+
+[dependencies.clippy]
+optional = true
+version = "0.0.188"
+
+[dependencies.log]
+features = ["release_max_level_trace", "max_level_trace"]
+version = "0.4.1"
+
+[dependencies.prost]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
+
+[dependencies.prost-derive]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
+
+[dependencies.prost-types]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
 
 [dependencies.semantic]
 path = "semantic"
@@ -31,3 +55,7 @@ crate-type = ["cdylib"]
 
 [workspace]
 members = ["semantic", "semantic-derive"]
+
+[features]
+default = []
+lint = ["clippy"]

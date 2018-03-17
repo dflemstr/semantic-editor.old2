@@ -6,7 +6,15 @@ use std::fmt;
 fn main() {
     prost_build::Config::new()
         .service_generator(Box::new(ServiceGenerator))
-        .compile_protos(&["src/schema/se/service/service.proto"], &["src/schema"])
+        .compile_protos(
+            &[
+                "src/schema/se/action/action.proto",
+                "src/schema/se/data/format.proto",
+                "src/schema/se/service/service.proto",
+                "src/schema/se/websocket/websocket.proto",
+            ],
+            &["src/schema"],
+        )
         .unwrap();
 
     vergen::vergen(vergen::OutputFns::all()).unwrap();
@@ -15,7 +23,7 @@ fn main() {
 struct ServiceGenerator;
 
 impl prost_build::ServiceGenerator for ServiceGenerator {
-    fn generate(&self, service: prost_build::Service, mut buf: &mut String) {
+    fn generate(&mut self, service: prost_build::Service, mut buf: &mut String) {
         use std::fmt::Write;
 
         let mut trait_methods = String::new();
@@ -46,7 +54,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
                 trait_methods,
                 r#"    fn {name}(&self, input: {input_type})
                    -> Box<::futures::Future<Item = {output_type},
-                                            Error = ::rpc::error::Error>>;"#,
+                                            Error = ::rpc::error::Error> + Send>;"#,
                 name = method.name,
                 input_type = method.input_type,
                 output_type = method.output_type
@@ -76,7 +84,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
             ).unwrap();
             writeln!(
                 match_input_proto_type_methods,
-                "{}{:?}",
+                "{}{:?},",
                 case, method.input_proto_type
             ).unwrap();
             writeln!(
@@ -95,7 +103,7 @@ impl prost_build::ServiceGenerator for ServiceGenerator {
                 Box::new(
                     ::futures::future::result(::rpc::decode(input))
                         .and_then(move |i| handler.{name}(i))
-                        .and_then(::rpc::encode))
+                        .and_then(::rpc::encode)),
 "#,
                 case,
                 name = method.name
@@ -115,10 +123,11 @@ pub struct {descriptor_name};
 /// This implements the `Server` trait by handling requests and dispatch them to methods on the
 /// supplied `{name}`.
 #[derive(Clone, Debug)]
-pub struct {server_name}<A>(A) where A: {name};
+pub struct {server_name}<A>(A) where A: {name} + Send;
 /// A client for a `{name}`.
 ///
 /// This implements the `{name}` trait by dispatching all method calls to the supplied `Client`.
+#[derive(Clone, Debug)]
 pub struct {client_name}<C>(C) where C: ::rpc::Client;
 /// A method available on a `{name}`.
 ///
@@ -126,7 +135,7 @@ pub struct {client_name}<C>(C) where C: ::rpc::Client;
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum {method_descriptor_name} {{
 {enum_methods}}}
-impl<A> {server_name}<A> where A: {name} {{
+impl<A> {server_name}<A> where A: {name} + Send {{
     pub fn new(handler: A) -> {server_name}<A> {{
         {server_name}(handler)
     }}
@@ -140,13 +149,13 @@ impl ::rpc::ServiceDescriptor for {descriptor_name} {{
 {list_enum_methods}        ]
     }}
 }}
-impl<A> ::rpc::Server<A, {descriptor_name}> for {server_name}<A> where A: {name} + 'static {{
+impl<A> ::rpc::Server<A, {descriptor_name}> for {server_name}<A> where A: {name} + Send + 'static {{
     fn handle(
         &self,
         method: {method_descriptor_name},
         handler: A,
         input: ::bytes::Bytes)
-        -> Box<::futures::Future<Item = ::bytes::Bytes, Error = ::rpc::error::Error> + 'static>
+        -> Box<::futures::Future<Item = ::bytes::Bytes, Error = ::rpc::error::Error> + Send>
     {{
         use futures::Future;
 
