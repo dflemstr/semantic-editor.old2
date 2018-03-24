@@ -1,10 +1,7 @@
 import { Microtask } from '../wasm/semantic_editor';
 
-let timeoutId: number;
-
 export function scheduleMicrotask(microtask: Microtask) {
-  timeoutId = window.setTimeout(() => {
-    clearTimeout(timeoutId);
+  window.setTimeout(() => {
     if (microtask.run()) {
       microtask.free();
     } else {
