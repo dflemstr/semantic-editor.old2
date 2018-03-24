@@ -6,14 +6,20 @@ use futures::sync::oneshot;
 use prost;
 use uuid;
 use std::collections;
-use std::sync;
+use std::rc;
+use std::cell;
 use schema::se::websocket as websocket_proto;
 
 pub mod ffi;
 
 /// An RPC connection over a WebSocket.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct WebSocketRpc {
+    inner: rc::Rc<cell::RefCell<Inner>>,
+}
+
+#[derive(Debug)]
+struct Inner {
     web_socket: ffi::WebSocket,
     handler: WebSocketHandler,
 }
@@ -31,7 +37,9 @@ pub struct CallFuture(oneshot::Receiver<bytes::Bytes>);
 
 /// An internal handler that handles incoming foreign raw WebSocket events.
 #[derive(Clone, Debug)]
-pub struct WebSocketHandler(sync::Arc<sync::Mutex<InnerWebSocketHandler>>);
+pub struct WebSocketHandler {
+    inner: rc::Rc<cell::RefCell<InnerWebSocketHandler>>,
+}
 
 #[derive(Debug)]
 struct InnerWebSocketHandler {
@@ -47,20 +55,23 @@ impl WebSocketRpc {
     pub fn open(url: &str) -> OpenFuture {
         let web_socket = ffi::WebSocket::new(url);
         let (onopen, open) = oneshot::channel();
-        let handler = WebSocketHandler(sync::Arc::new(sync::Mutex::new(InnerWebSocketHandler {
+
+        let inner = rc::Rc::new(cell::RefCell::new(InnerWebSocketHandler {
             onopen: Some(onopen),
             onmessage: collections::HashMap::new(),
-        })));
+        }));
+
+        let handler = WebSocketHandler { inner };
 
         ffi::setWebSocketHandler(&web_socket, ffi::WebSocketHandler(handler.clone()));
 
-        OpenFuture {
-            open,
-            rpc: Some(WebSocketRpc {
-                web_socket,
-                handler,
-            }),
-        }
+        let inner = rc::Rc::new(cell::RefCell::new(Inner {
+            web_socket,
+            handler,
+        }));
+        let rpc = Some(WebSocketRpc { inner });
+
+        OpenFuture { open, rpc }
     }
 }
 
@@ -70,7 +81,7 @@ impl super::Client for WebSocketRpc {
         service_name: &str,
         method_name: &str,
         input: bytes::Bytes,
-    ) -> Box<futures::Future<Item = bytes::Bytes, Error = super::error::Error> + Send> {
+    ) -> Box<futures::Future<Item=bytes::Bytes, Error=super::error::Error> + Send> {
         let id = uuid::Uuid::parse_str(&ffi::uuid::v4()).unwrap();
 
         let request = websocket_proto::Request {
@@ -86,13 +97,12 @@ impl super::Client for WebSocketRpc {
         prost::Message::encode(&request, &mut buffer).unwrap();
 
         let (onmessage, message) = oneshot::channel();
-        self.handler
-            .0
-            .lock()
-            .unwrap()
-            .onmessage
-            .insert(id, onmessage);
-        self.web_socket.send(&buffer);
+
+        let mut inner = self.inner.borrow_mut();
+        let mut inner_handler = inner.handler.inner.borrow_mut();
+        inner_handler.onmessage.insert(id, onmessage);
+        inner.web_socket.send(&buffer);
+
         Box::new(CallFuture(message))
     }
 }
@@ -126,17 +136,14 @@ impl futures::Future for CallFuture {
 impl WebSocketHandler {
     /// Called when the associated WebSocket is closed.
     pub fn onclose(&self, code: u16, reason: &str, was_clean: bool) {
-        info!("onclose({:?}, {:?}, {:?})", code, reason, was_clean);
     }
 
     /// Called when the associated WebSocket encountered an error.
     pub fn onerror(&self) {
-        info!("onerror()");
     }
 
     /// Called when the associated WebSocket received new data.
-    pub fn onmessage(&self, data: &[u8], origin: &str) {
-        info!("Received data: {:?}", data);
+    pub fn onmessage(&self, data: &[u8], _origin: &str) {
         let response: websocket_proto::Response = match prost::Message::decode(data) {
             Err(e) => {
                 error!("onmessage() failed to decode response: {}", e);
@@ -152,7 +159,7 @@ impl WebSocketHandler {
             Ok(r) => r,
         };
 
-        if let Some(onmessage) = self.0.lock().unwrap().onmessage.remove(&uuid) {
+        if let Some(onmessage) = self.inner.borrow_mut().onmessage.remove(&uuid) {
             if onmessage.send(response.data.into()).is_err() {
                 error!("onmessage() failed to send oneshot notification");
             }
@@ -163,7 +170,7 @@ impl WebSocketHandler {
 
     /// Called when the associated WebSocket was successfully opened.
     pub fn onopen(&self) {
-        if let Some(tx) = self.0.lock().unwrap().onopen.take() {
+        if let Some(tx) = self.inner.borrow_mut().onopen.take() {
             match tx.send(()) {
                 Err(()) => error!("onopen() failed to send oneshot notification"),
                 Ok(()) => (),

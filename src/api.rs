@@ -3,14 +3,21 @@
 #![allow(unsafe_code)]
 #![allow(missing_docs)]
 
-use std::path;
+use std::panic;
 
 use wasm_bindgen::prelude::*;
 
 use logger;
-use rpc;
-use scheduler;
-use version;
+use executor;
+
+#[wasm_bindgen]
+pub fn init() {
+    logger::init();
+
+    panic::set_hook(Box::new(|info| {
+        error!("panic occurred: {}", info.payload().downcast_ref::<&str>().unwrap());
+    }))
+}
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -21,13 +28,19 @@ impl SemanticEditor {
     pub fn new(url: &str, resolve: JsValue, reject: JsValue) {
         use futures::Future;
 
-        let scheduler = scheduler::Scheduler::new();
+        let executor = executor::Executor::new();
 
-        let future = super::SemanticEditor::new(scheduler.clone(), url.to_owned())
+        let future = super::SemanticEditor::new(executor.clone(), url.to_owned())
             .map(move |e| resolveSemanticEditor(resolve, SemanticEditor(e)))
             .map_err(move |e| rejectSemanticEditor(reject, &format!("{}", e)));
 
-        scheduler.schedule(future);
+        executor.spawn(future);
+    }
+
+    pub fn send_rpc(&self) {
+        use futures::Future;
+
+        self.0.executor.spawn(self.0.send_rpc().map_err(|e| error!("rpc failed: {:?}", e)));
     }
 
     pub fn document(&self) -> String {

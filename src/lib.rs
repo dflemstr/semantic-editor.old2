@@ -7,7 +7,9 @@
 
 #![feature(conservative_impl_trait)]
 #![feature(generators)]
+#![feature(nll)]
 #![feature(proc_macro)]
+
 #![cfg_attr(feature = "lint", feature(plugin))]
 #![cfg_attr(feature = "lint", plugin(clippy))]
 #![deny(missing_docs)]
@@ -21,8 +23,6 @@
 #![deny(non_camel_case_types)]
 
 extern crate bytes;
-#[macro_use]
-extern crate error_chain;
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
@@ -36,15 +36,16 @@ extern crate pulldown_cmark;
 extern crate semantic;
 #[macro_use]
 extern crate semantic_derive;
+extern crate tokio_executor;
 extern crate uuid;
 extern crate wasm_bindgen;
 
 pub mod api;
-pub mod logger;
+pub mod executor;
 pub mod data;
 pub mod error;
+pub mod logger;
 pub mod schema;
-pub mod scheduler;
 pub mod rpc;
 mod version;
 
@@ -53,21 +54,30 @@ use futures::prelude::*;
 /// An instance of the semantic editor.
 #[derive(Debug)]
 pub struct SemanticEditor {
-    scheduler: scheduler::Scheduler,
+    executor: executor::Executor,
     rpc: rpc::websocket::WebSocketRpc,
 }
 
 impl SemanticEditor {
     /// Creates a new semantic editor with default options depending on the environment.
     #[async]
-    pub fn new(
-        scheduler: scheduler::Scheduler,
-        url: String,
-    ) -> Result<SemanticEditor, error::Error> {
-        logger::init();
+    pub fn new(executor: executor::Executor, url: String) -> error::Result<SemanticEditor> {
         version::log();
         let rpc = await!(rpc::websocket::WebSocketRpc::open(&url))?;
-        Ok(SemanticEditor { scheduler, rpc })
+        Ok(SemanticEditor { executor, rpc })
+    }
+
+    /// (TEMP) Send a random RPC call
+    pub fn send_rpc(&self) -> impl Future<Item = (), Error = error::Error> {
+        SemanticEditor::send_inner(self.rpc.clone())
+    }
+
+    #[async]
+    fn send_inner(rpc: rpc::websocket::WebSocketRpc) -> Result<(), error::Error> {
+        use rpc::Client;
+        let response = await!(rpc.call("Service", "method", vec![1, 2, 3].into()))?;
+        info!("response = {:?}", response);
+        Ok(())
     }
 
     /// (TEMP) Test document rendering

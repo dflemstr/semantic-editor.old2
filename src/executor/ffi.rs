@@ -6,7 +6,7 @@
 
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(module = "../scheduler/ffi")]
+#[wasm_bindgen(module = "../executor/ffi")]
 extern "C" {
     #[allow(non_snake_case)]
     pub fn scheduleMicrotask(microtask: Microtask);
@@ -17,7 +17,7 @@ pub struct Microtask(pub super::Microtask);
 
 #[wasm_bindgen]
 impl Microtask {
-    pub fn run(&self) {
+    pub fn run(&self) -> bool {
         self.0.run()
     }
 }

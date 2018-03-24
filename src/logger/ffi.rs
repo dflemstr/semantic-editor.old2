@@ -10,15 +10,15 @@ use wasm_bindgen::prelude::*;
 extern "C" {
     pub type console;
 
-    #[wasm_bindgen(static = console)]
+    #[wasm_bindgen(js_namespace = console)]
     pub fn log(s: &str);
 
-    #[wasm_bindgen(static = console)]
+    #[wasm_bindgen(js_namespace = console)]
     pub fn info(s: &str);
 
-    #[wasm_bindgen(static = console)]
+    #[wasm_bindgen(js_namespace = console)]
     pub fn warn(s: &str);
 
-    #[wasm_bindgen(static = console)]
+    #[wasm_bindgen(js_namespace = console)]
     pub fn error(s: &str);
 }
