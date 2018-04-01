@@ -85,7 +85,7 @@ where
 #[async]
 fn run_listener<H>(log: Logger, listener: tokio::net::TcpListener, handler: H) -> error::Result<()>
 where
-    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
     #[async]
     for socket in listener.incoming() {
@@ -103,7 +103,7 @@ where
 #[async]
 fn handle_socket<H>(log: Logger, handler: H, sock: tokio::net::TcpStream) -> error::Result<()>
 where
-    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
     let ws_stream = await!(tokio_tungstenite::accept_async(sock))?;
     match await!(handle_ws_stream(log.clone(), handler, ws_stream)) {
@@ -120,7 +120,7 @@ fn handle_ws_stream<H>(
     ws_stream: tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>,
 ) -> error::Result<()>
 where
-    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
     use futures::Future;
     use futures::Stream;
@@ -144,7 +144,7 @@ fn run_ws_reader<H, S>(
     response_tx: futures::sync::mpsc::UnboundedSender<tungstenite::Message>,
 ) -> error::Result<()>
 where
-    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
     S: futures::Stream<Item = tungstenite::Message, Error = tungstenite::Error> + 'static,
 {
     use prost::Message;
@@ -172,10 +172,13 @@ where
 }
 
 #[async]
-fn run_ws_writer<S>(mut sink: S,
-                    response_rx: futures::sync::mpsc::UnboundedReceiver<tungstenite::Message>)
--> error::Result<()>
-    where S: futures::Sink<SinkItem = tungstenite::Message, SinkError = tungstenite::Error> + 'static {
+fn run_ws_writer<S>(
+    mut sink: S,
+    response_rx: futures::sync::mpsc::UnboundedReceiver<tungstenite::Message>,
+) -> error::Result<()>
+where
+    S: futures::Sink<SinkItem = tungstenite::Message, SinkError = tungstenite::Error> + 'static,
+{
     use futures::Stream;
 
     #[async]
@@ -192,7 +195,7 @@ fn handle_ws_request<H>(
     request: websocket_proto::Request,
 ) -> error::Result<websocket_proto::Response>
 where
-    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
     use prost_simple_rpc::descriptor::MethodDescriptor;
     use prost_simple_rpc::descriptor::ServiceDescriptor;
@@ -210,7 +213,7 @@ where
     if let Some(method_descriptor) = methods.iter().find(|m| request.method_name == m.name()) {
         let method_descriptor = method_descriptor.clone();
         match await!(handler.call(method_descriptor, request.data.into())) {
-            Ok(response) =>Ok(data_response(request.id, response.to_vec())),
+            Ok(response) => Ok(data_response(request.id, response.to_vec())),
             Err(err) => Ok(error_response(request.id, &err)),
         }
     } else {
@@ -226,7 +229,7 @@ fn data_response(request_id: Vec<u8>, data: Vec<u8>) -> websocket_proto::Respons
         id: request_id,
         data,
         error_code: websocket_proto::response::ErrorCode::None.into(),
-    .. websocket_proto::Response::default()
+        ..websocket_proto::Response::default()
     }
 }
 
@@ -237,32 +240,36 @@ fn error_code_response(
     websocket_proto::Response {
         id: request_id,
         error_code: error_code.into(),
-        .. websocket_proto::Response::default()
+        ..websocket_proto::Response::default()
     }
 }
 
-fn error_response(
-    request_id: Vec<u8>,
-    error: &failure::Fail,
-) -> websocket_proto::Response {
+fn error_response(request_id: Vec<u8>, error: &failure::Fail) -> websocket_proto::Response {
     websocket_proto::Response {
         id: request_id,
         error_code: websocket_proto::response::ErrorCode::Runtime.into(),
         error: Some(to_proto_error(error)),
-        .. websocket_proto::Response::default()
+        ..websocket_proto::Response::default()
     }
 }
 
-fn to_proto_error(error: &failure::Fail)-> websocket_proto::response::Error {
+fn to_proto_error(error: &failure::Fail) -> websocket_proto::response::Error {
     websocket_proto::response::Error {
         message: error.to_string(),
         cause: error.cause().map(to_proto_error).map(Box::new),
-        backtrace: error.backtrace().map(to_proto_backtrace).unwrap_or_else(|| vec![]),
+        backtrace: error
+            .backtrace()
+            .map(to_proto_backtrace)
+            .unwrap_or_else(|| vec![]),
     }
 }
 
 fn to_proto_backtrace(backtrace: &failure::Backtrace) -> Vec<String> {
-    backtrace.to_string().lines().map(|s| s.to_owned()).collect()
+    backtrace
+        .to_string()
+        .lines()
+        .map(|s| s.to_owned())
+        .collect()
 }
 
 fn encode<M>(message: M) -> error::Result<Vec<u8>>

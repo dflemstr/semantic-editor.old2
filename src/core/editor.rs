@@ -49,7 +49,9 @@ impl service_proto::SemanticEditor for SemanticEditor {
                 ).map(|file| service_proto::ListFilesResponse { file })
                     .map_err(error::nested_error),
             ),
-            Err(err) => Box::new(futures::future::err(error::nested_error(error::Error::from(err)))),
+            Err(err) => Box::new(futures::future::err(error::nested_error(
+                error::Error::from(err),
+            ))),
         }
     }
 }
