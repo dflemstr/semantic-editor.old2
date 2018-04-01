@@ -20,12 +20,20 @@ message Response {
   bytes id = 1;
   // The response data payload.
   bytes data = 2;
-  Error error = 3;
+  ErrorCode error_code = 3;
+  Error error = 4;
 
-  enum Error {
-    ERROR_UNKNOWN = 0;
-    ERROR_NONE = 1;
-    ERROR_SERVICE_NOT_FOUND = 2;
-    ERROR_METHOD_NOT_FOUND = 3;
+  enum ErrorCode {
+    UNKNOWN = 0;
+    NONE = 1;
+    SERVICE_NOT_FOUND = 2;
+    METHOD_NOT_FOUND = 3;
+    RUNTIME = 4;
+  }
+
+  message Error {
+    string message = 1;
+    Error cause = 2;
+    repeated string backtrace = 3;
   }
 }

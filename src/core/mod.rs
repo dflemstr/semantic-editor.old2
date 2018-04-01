@@ -201,20 +201,22 @@ where
     let methods = H::Descriptor::methods();
 
     if request.service_name != service_name {
-        return Ok(error_response(
+        return Ok(error_code_response(
             request.id,
-            websocket_proto::response::Error::ErrorServiceNotFound,
+            websocket_proto::response::ErrorCode::ServiceNotFound,
         ));
     }
 
     if let Some(method_descriptor) = methods.iter().find(|m| request.method_name == m.name()) {
         let method_descriptor = method_descriptor.clone();
-        let response = await!(handler.call(method_descriptor, request.data.into()))?;
-        Ok(data_response(request.id, response.to_vec()))
+        match await!(handler.call(method_descriptor, request.data.into())) {
+            Ok(response) =>Ok(data_response(request.id, response.to_vec())),
+            Err(err) => Ok(error_response(request.id, &err)),
+        }
     } else {
-        Ok(error_response(
+        Ok(error_code_response(
             request.id,
-            websocket_proto::response::Error::ErrorMethodNotFound,
+            websocket_proto::response::ErrorCode::MethodNotFound,
         ))
     }
 }
@@ -223,19 +225,44 @@ fn data_response(request_id: Vec<u8>, data: Vec<u8>) -> websocket_proto::Respons
     websocket_proto::Response {
         id: request_id,
         data,
-        error: websocket_proto::response::Error::ErrorNone.into(),
+        error_code: websocket_proto::response::ErrorCode::None.into(),
+    .. websocket_proto::Response::default()
+    }
+}
+
+fn error_code_response(
+    request_id: Vec<u8>,
+    error_code: websocket_proto::response::ErrorCode,
+) -> websocket_proto::Response {
+    websocket_proto::Response {
+        id: request_id,
+        error_code: error_code.into(),
+        .. websocket_proto::Response::default()
     }
 }
 
 fn error_response(
     request_id: Vec<u8>,
-    error: websocket_proto::response::Error,
+    error: &failure::Fail,
 ) -> websocket_proto::Response {
     websocket_proto::Response {
         id: request_id,
-        data: vec![],
-        error: error.into(),
+        error_code: websocket_proto::response::ErrorCode::Runtime.into(),
+        error: Some(to_proto_error(error)),
+        .. websocket_proto::Response::default()
     }
+}
+
+fn to_proto_error(error: &failure::Fail)-> websocket_proto::response::Error {
+    websocket_proto::response::Error {
+        message: error.to_string(),
+        cause: error.cause().map(to_proto_error).map(Box::new),
+        backtrace: error.backtrace().map(to_proto_backtrace).unwrap_or_else(|| vec![]),
+    }
+}
+
+fn to_proto_backtrace(backtrace: &failure::Backtrace) -> Vec<String> {
+    backtrace.to_string().lines().map(|s| s.to_owned()).collect()
 }
 
 fn encode<M>(message: M) -> error::Result<Vec<u8>>
