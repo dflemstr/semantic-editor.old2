@@ -18,16 +18,20 @@ jobs:
           name: Install yarn
           command: sudo npm install -g yarn && sudo chmod +x /usr/local/bin/yarn
       - restore_cache:
-          key: node-modules-cache-{{ checksum "yarn.lock" }}
+          keys:
+            - node-modules-cache-{{ checksum "yarn.lock" }}
+            - node-modules-cache-
       - run:
           name: Install node dependencies
           command: yarn
       - save_cache:
-          key: node-modules-cache-{{ checksum "yarn.lock" }}
+          key: node-modules-cache-{{ checksum "yarn.lock" }}-{{ .Revision }}
           paths:
             - ./node_modules
       - restore_cache:
-          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          keys:
+            - cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - cargo-cache-{{ arch }}
       - run:
           name: Install wasm-bindgen-cli
           command: CARGO_TARGET_DIR=.cargo-install/wasm-bindgen-cli cargo install --git https://github.com/alexcrichton/wasm-bindgen.git --rev 25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe -f
@@ -38,7 +42,7 @@ jobs:
           name: Build
           command: yarn build
       - save_cache:
-          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}-{{ .Revision }}
           paths:
             - ~/.cargo
             - ./.cargo_install
