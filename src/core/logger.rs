@@ -16,7 +16,10 @@ pub fn init(options: &super::options::Options) -> slog::Logger {
     let mut builder = slog_term::TermDecorator::new();
 
     // Work-around 'term' issue; for example lacking 256color support
-    if env::var("TERM").map(|s| s.starts_with("xterm")).unwrap_or(false) {
+    if env::var("TERM")
+        .map(|s| s.starts_with("xterm"))
+        .unwrap_or(false)
+    {
         env::set_var("TERM", "xterm");
     }
 
@@ -25,7 +28,7 @@ pub fn init(options: &super::options::Options) -> slog::Logger {
     }
 
     let decorator = builder.build();
-    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
 
     let log = config_log_1(drain, &options);
     slog_scope::set_global_logger(log.clone()).cancel_reset();

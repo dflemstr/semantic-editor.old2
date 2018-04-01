@@ -47,7 +47,7 @@ impl SemanticEditor {
         slog_scope::set_global_logger(log.clone()).cancel_reset();
         slog_stdlog::init().unwrap();
 
-        version::init(&log);
+        let log = version::init(log);
 
         let panic_log = log.clone();
         panic::set_hook(Box::new(move |info| {

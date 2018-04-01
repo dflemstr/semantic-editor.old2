@@ -47,7 +47,7 @@ pub fn run() -> error::Result<()> {
 
     let log = logger::init(&options);
 
-    version::init(&log);
+    let log = version::init(log);
 
     info!(log, "Parsed command-line options";
     "options" => format!("{:?}", options));

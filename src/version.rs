@@ -5,13 +5,10 @@ use slog;
 
 include!(concat!(env!("OUT_DIR"), "/version.rs"));
 
-pub fn init(log: &slog::Logger) {
+pub fn init(log: slog::Logger) -> slog::Logger {
     let log = log.new(o!(
-        "name" => env!("CARGO_PKG_NAME"),
         "version" => format!(concat!(env!("CARGO_PKG_VERSION"), "-{}"), short_sha()),
-        "created" => commit_date(),
-        "built" => now(),
-        "target" => target()
+        "target" => target(),
     ));
 
     info!(
@@ -20,12 +17,12 @@ pub fn init(log: &slog::Logger) {
             "Initializing ",
             env!("CARGO_PKG_NAME"),
             " version ",
-            env!("CARGO_PKG_VERSION"),
-            "-{} created {} built {} running on {}"
-        ),
-        short_sha(),
-        commit_date(),
-        now(),
-        target(),
+            env!("CARGO_PKG_VERSION")
+        );
+        "name" => env!("CARGO_PKG_NAME"),
+        "created" => commit_date(),
+        "built" => now(),
     );
+
+    log
 }
