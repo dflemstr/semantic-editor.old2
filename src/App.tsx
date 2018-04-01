@@ -2,7 +2,8 @@ import * as React from 'react';
 import { Value } from 'slate'
 import { SemanticEditor, FileListing } from './wasm/semantic_editor'
 import { booted as wasmBooted } from './wasm/semantic_editor_bg'
-import { Alignment, MenuItem, Navbar, NavbarGroup,
+import {
+  Alignment, MenuItem, Navbar, NavbarGroup,
   NavbarHeading
 } from "@blueprintjs/core";
 import "@blueprintjs/core/lib/css/blueprint.css";
@@ -15,7 +16,11 @@ let editorBooted = wasmBooted.then(async () => {
   const files = await new Promise<FileListing>((resolve, reject) => editor.list_files("/", resolve, reject));
   for (let i = 0; i < files.fileLength(); i++) {
     const file = files.file(i);
-    console.log(file.path(), file.isRegular(), file.isDirectory());
+    console.log({
+      path: file.path(),
+      isRegular: file.isRegular(),
+      isDirectory: file.isDirectory()
+    });
   }
 });
 
