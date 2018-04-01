@@ -9,6 +9,10 @@ pub struct Options {
     #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
     pub verbose: u8,
 
+    /// Force colorful output.
+    #[structopt(long = "color")]
+    pub color: bool,
+
     /// Log to syslog (no-op unless this program was compiled with the "syslog" feature)
     #[structopt(long = "syslog")]
     pub syslog: bool,

@@ -1,3 +1,5 @@
+use std::env;
+
 use slog;
 use slog_async;
 #[cfg(feature = "journald")]
@@ -11,7 +13,18 @@ use slog_syslog;
 pub fn init(options: &super::options::Options) -> slog::Logger {
     use slog::Drain;
 
-    let decorator = slog_term::TermDecorator::new().build();
+    let mut builder = slog_term::TermDecorator::new();
+
+    // Work-around 'term' issue; for example lacking 256color support
+    if env::var("TERM").map(|s| s.starts_with("xterm")).unwrap_or(false) {
+        env::set_var("TERM", "xterm");
+    }
+
+    if options.color {
+        builder = builder.force_color();
+    }
+
+    let decorator = builder.build();
     let drain = slog_term::CompactFormat::new(decorator).build().fuse();
 
     let log = config_log_1(drain, &options);
