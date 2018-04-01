@@ -24,7 +24,7 @@
     "start:react": "react-app-rewired start",
     "build": "npm-run-all build:cargo-wasm build:wasm-gc build:wasm-bindgen build:wasm2es6js build:react build:cargo-core",
     "build:cargo-wasm": "cargo build --release --target=wasm32-unknown-unknown --features lint",
-    "build:cargo-core": "cargo build --release --features lint",
+    "build:cargo-core": "cargo build --release --features 'lint standalone'",
     "build:wasm-gc": "scripts/run-wasm-gc",
     "build:wasm-bindgen": "scripts/run-wasm-bindgen",
     "build:wasm2es6js": "scripts/run-wasm2es6js",
