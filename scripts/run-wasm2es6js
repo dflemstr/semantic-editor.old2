@@ -1,7 +1,7 @@
 #!/bin/sh -eu
 bg=src/wasm/semantic_editor_bg.js
 
-wasm2es6js src/wasm/semantic_editor_bg.wasm -o "$bg" --base64
+RUST_BACKTRACE=1 wasm2es6js src/wasm/semantic_editor_bg.wasm -o "$bg" --base64
 
 awk '
   BEGIN {print "/*ignore jslint start*/"}

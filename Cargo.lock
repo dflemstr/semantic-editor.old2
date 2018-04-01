@@ -934,7 +934,7 @@ dependencies = [
  "tungstenite 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vergen 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasm-bindgen 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen)",
+ "wasm-bindgen 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)",
 ]
 
 [[package]]
@@ -1502,39 +1502,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "wasm-bindgen"
 version = "0.1.0"
-source = "git+https://github.com/alexcrichton/wasm-bindgen#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
+source = "git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
 dependencies = [
- "wasm-bindgen-macro 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen)",
+ "wasm-bindgen-macro 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)",
 ]
 
 [[package]]
 name = "wasm-bindgen-backend"
 version = "0.1.0"
-source = "git+https://github.com/alexcrichton/wasm-bindgen#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
+source = "git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
 dependencies = [
  "proc-macro2 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.12.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasm-bindgen-shared 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen)",
+ "wasm-bindgen-shared 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)",
 ]
 
 [[package]]
 name = "wasm-bindgen-macro"
 version = "0.1.1"
-source = "git+https://github.com/alexcrichton/wasm-bindgen#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
+source = "git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
 dependencies = [
  "proc-macro2 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.12.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasm-bindgen-backend 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen)",
- "wasm-bindgen-shared 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen)",
+ "wasm-bindgen-backend 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)",
+ "wasm-bindgen-shared 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)",
 ]
 
 [[package]]
 name = "wasm-bindgen-shared"
 version = "0.1.1"
-source = "git+https://github.com/alexcrichton/wasm-bindgen#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
+source = "git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
 dependencies = [
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1760,10 +1760,10 @@ dependencies = [
 "checksum vec_map 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "887b5b631c2ad01628bbbaa7dd4c869f80d3186688f8d0b6f58774fbe324988c"
 "checksum vergen 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8c3365f36c57e5df714a34be40902b27a992eeddb9996eca52d0584611cf885d"
 "checksum void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
-"checksum wasm-bindgen 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen)" = "<none>"
-"checksum wasm-bindgen-backend 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen)" = "<none>"
-"checksum wasm-bindgen-macro 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen)" = "<none>"
-"checksum wasm-bindgen-shared 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen)" = "<none>"
+"checksum wasm-bindgen 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"
+"checksum wasm-bindgen-backend 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"
+"checksum wasm-bindgen-macro 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"
+"checksum wasm-bindgen-shared 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)" = "04e3bd221fcbe8a271359c04f21a76db7d0c6028862d1bb5512d85e1e2eb5bb3"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"

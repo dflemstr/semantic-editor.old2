@@ -44,6 +44,7 @@ version = "2.2.3"
 
 [dependencies.wasm-bindgen]
 git = "https://github.com/alexcrichton/wasm-bindgen"
+rev = "25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
 
 [features]
 default = []

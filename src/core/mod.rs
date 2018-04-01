@@ -101,6 +101,7 @@ fn handle_ws_stream<H>(
 
             let tx = tx.clone();
             let handler = handler.clone();
+            let log = log.clone();
 
             let data = message.into_data();
             // TODO(dflemstr): don't panic on errors here

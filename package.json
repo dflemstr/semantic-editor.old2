@@ -22,7 +22,7 @@
     "start:cargo-core-build": "cargo watch -w src -x 'check --features lint' -s 'touch .trigger'",
     "start:cargo-core-run": "cargo watch --no-gitignore -w .trigger -x run",
     "start:react": "react-app-rewired start",
-    "build": "npm-run-all build:cargo-wasm build:wasm-gc build:wasm-bindgen build:react build:cargo-core",
+    "build": "npm-run-all build:cargo-wasm build:wasm-gc build:wasm-bindgen build:wasm2es6js build:react build:cargo-core",
     "build:cargo-wasm": "cargo build --release --target=wasm32-unknown-unknown --features lint",
     "build:cargo-core": "cargo build --release --features lint",
     "build:wasm-gc": "scripts/run-wasm-gc",

@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/sh -eu
 main=src/wasm/semantic_editor.js
 
-wasm-bindgen target/wasm32-unknown-unknown/release/semantic_editor.wasm --typescript --out-dir src/wasm
+RUST_BACKTRACE=1 wasm-bindgen target/wasm32-unknown-unknown/release/semantic_editor.wasm --typescript --out-dir src/wasm
 
 awk '
   BEGIN {print "/*ignore jslint start*/"}

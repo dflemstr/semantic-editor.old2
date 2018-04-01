@@ -1,0 +1,45 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:9
+    steps:
+      - checkout
+      - run:
+          name: Tweak PATH
+          command: echo 'PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+      - run:
+          name: Install Rust
+          command: curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=$(cat rust-toolchain) -y
+      - run:
+          name: Add WASM32 support
+          command: rustup target add wasm32-unknown-unknown --toolchain $(cat rust-toolchain)
+      - run:
+          name: Install yarn
+          command: sudo npm install -g yarn && sudo chmod +x /usr/local/bin/yarn
+      - restore_cache:
+          key: node-modules-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install node dependencies
+          command: yarn
+      - save_cache:
+          key: node-modules-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+      - restore_cache:
+          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Install wasm-bindgen-cli
+          command: CARGO_TARGET_DIR=.cargo-install/wasm-bindgen-cli cargo install --git https://github.com/alexcrichton/wasm-bindgen.git --rev 25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe -f
+      - run:
+          name: Install wasm-gc
+          command: CARGO_TARGET_DIR=.cargo-install/wasm-gc cargo install wasm-gc -f
+      - run:
+          name: Build
+          command: yarn build
+      - save_cache:
+          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - ~/.cargo
+            - ./.cargo_install
+            - ./target
