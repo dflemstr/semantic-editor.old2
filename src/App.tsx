@@ -12,7 +12,7 @@ let editor: SemanticEditor;
 
 let editorBooted = wasmBooted.then(async () => {
   editor = await new Promise<SemanticEditor>((resolve, reject) => SemanticEditor.new('ws://localhost:12345', resolve, reject));
-  const files = await new Promise<FileListing>((resolve, reject) => editor.list_files("", resolve, reject));
+  const files = await new Promise<FileListing>((resolve, reject) => editor.list_files("/", resolve, reject));
   for (let i = 0; i < files.fileLength(); i++) {
     const file = files.file(i);
     console.log(file.path(), file.isRegular(), file.isDirectory());

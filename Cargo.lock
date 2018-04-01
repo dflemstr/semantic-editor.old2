@@ -7,6 +7,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloc-no-stdlib"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -76,6 +81,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "bitflags"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "brotli"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "alloc-no-stdlib 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "brotli-decompressor 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "brotli-decompressor"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "alloc-no-stdlib 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "byteorder"
@@ -727,7 +749,7 @@ dependencies = [
 
 [[package]]
 name = "prost-simple-rpc"
-version = "0.1.1"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bytes 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -739,7 +761,7 @@ dependencies = [
 
 [[package]]
 name = "prost-simple-rpc-build"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "heck 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -850,6 +872,14 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "same-file"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "winapi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "schannel"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -905,6 +935,8 @@ dependencies = [
 name = "semantic-editor"
 version = "0.1.0"
 dependencies = [
+ "brotli 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "brotli-decompressor 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "clippy 0.0.188 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -914,8 +946,8 @@ dependencies = [
  "prost 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)",
  "prost-build 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)",
  "prost-derive 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)",
- "prost-simple-rpc 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "prost-simple-rpc-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "prost-simple-rpc 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "prost-simple-rpc-build 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "pulldown-cmark 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "semantic 0.1.0",
  "semantic-derive 0.1.0",
@@ -934,6 +966,7 @@ dependencies = [
  "tungstenite 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vergen 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "walkdir 2.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)",
 ]
 
@@ -1500,6 +1533,15 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "walkdir"
+version = "2.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "same-file 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "wasm-bindgen"
 version = "0.1.0"
 source = "git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe#25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
@@ -1589,6 +1631,7 @@ dependencies = [
 
 [metadata]
 "checksum aho-corasick 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "d6531d44de723825aa81398a6415283229725a00fa30713812ab9323faa82fc4"
+"checksum alloc-no-stdlib 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b21f6ad9c9957eb5d70c3dee16d31c092b3cab339628f821766b05e6833d72b8"
 "checksum ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
 "checksum arrayvec 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)" = "a1e964f9e24d588183fcb43503abda40d288c8657dfc27311516ce2f05675aef"
 "checksum atty 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "af80143d6f7608d746df1520709e5d141c96f240b0e62b0aa41bdfb53374d9d4"
@@ -1598,6 +1641,8 @@ dependencies = [
 "checksum bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aad18937a628ec6abcd26d1489012cc0e18c21798210f491af69ded9b881106d"
 "checksum bitflags 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "4efd02e230a02e18f92fc2735f44597385ed02ad8f831e7c1c1156ee5e1ab3a5"
 "checksum bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b3c30d3802dfb7281680d6285f2ccdaa8c2d8fee41f93805dba5c4cf50dc23cf"
+"checksum brotli 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "02e64e894fb5692199ca29a77f1c2fd6a8875b4cf3f2ae8a885ed36c48fd7c82"
+"checksum brotli-decompressor 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "358f28e94689d14c621de44c6813555abeadf0c95c3e1f3f13943deb9eb98dc8"
 "checksum byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "652805b7e73fada9d85e9a6682a4abd490cb52d96aeecc12e33a0de34dfd0d23"
 "checksum bytes 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "1b7db437d718977f6dc9b2e3fd6fc343c02ac6b899b73fdd2179163447bd9ce9"
 "checksum cargo_metadata 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)" = "6ebd6272a2ca4fd39dbabbd6611eb03df45c2259b3b80b39a9ff8fbdcf42a4b3"
@@ -1676,8 +1721,8 @@ dependencies = [
 "checksum prost 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)" = "<none>"
 "checksum prost-build 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)" = "<none>"
 "checksum prost-derive 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)" = "<none>"
-"checksum prost-simple-rpc 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c78306b0d3ec26bce7f9729c101fd64d2dee22a173977f7d4f4ddd2d03891eb3"
-"checksum prost-simple-rpc-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6d48ef0a676d2b13d9fffec1185913a27df8162b315debcb3ec423b2905baf"
+"checksum prost-simple-rpc 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "f7f840739168957a6dfbed8d1e744972e1619385ac102360ea75c74afc85261f"
+"checksum prost-simple-rpc-build 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9e7402ed34ff4389b90fd749adbd340e892ffcfa390c2016a89182e0151e7ab5"
 "checksum prost-types 0.3.2 (git+https://github.com/ngg/prost.git?branch=nightly-proc-macro2)" = "<none>"
 "checksum pulldown-cmark 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d6fdf85cda6cadfae5428a54661d431330b312bc767ddbc57adbedc24da66e32"
 "checksum quick-error 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "eda5fe9b71976e62bc81b781206aaa076401769b2143379d3eb2118388babac4"
@@ -1692,6 +1737,7 @@ dependencies = [
 "checksum remove_dir_all 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dfc5b3ce5d5ea144bb04ebd093a9e14e9765bcfec866aecda9b6dec43b3d1e24"
 "checksum rustc-demangle 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)" = "11fb43a206a04116ffd7cfcf9bcb941f8eb6cc7ff667272246b0a1c74259a3cb"
 "checksum safemem 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e27a8b19b835f7aea908818e871f5cc3a5a186550c30773be987e155e8163d8f"
+"checksum same-file 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "cfb6eded0b06a0b512c8ddbcf04089138c9b4362c2f696f3c3d76039d68f3637"
 "checksum schannel 0.1.11 (registry+https://github.com/rust-lang/crates.io-index)" = "fbaffce35eb61c5b00846e73128b0cd62717e7c0ec46abbec132370d013975b4"
 "checksum scoped-tls 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8674d439c964889e2476f474a3bf198cc9e199e77499960893bac5de7e9218a4"
 "checksum scopeguard 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "94258f53601af11e6a49f722422f6e3425c52b06245a5cf9bc09908b174f5e27"
@@ -1760,6 +1806,7 @@ dependencies = [
 "checksum vec_map 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "887b5b631c2ad01628bbbaa7dd4c869f80d3186688f8d0b6f58774fbe324988c"
 "checksum vergen 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8c3365f36c57e5df714a34be40902b27a992eeddb9996eca52d0584611cf885d"
 "checksum void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
+"checksum walkdir 2.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "63636bd0eb3d00ccb8b9036381b526efac53caf112b7783b730ab3f8e44da369"
 "checksum wasm-bindgen 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"
 "checksum wasm-bindgen-backend 0.1.0 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"
 "checksum wasm-bindgen-macro 0.1.1 (git+https://github.com/alexcrichton/wasm-bindgen?rev=25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe)" = "<none>"

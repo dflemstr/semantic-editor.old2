@@ -1,7 +1,11 @@
 //! The core of the editor.
 //!
 //! Responsible for running the infrastructure used by all of the editor front-ends.
+#![allow(unused_qualifications)]
+
+use std::mem;
 use std::net;
+use std::sync;
 
 use bytes;
 use failure;
@@ -14,7 +18,7 @@ use tokio_tungstenite;
 use tungstenite;
 use uuid;
 
-use tokio::prelude::*;
+use futures::prelude::{async, await};
 
 use error;
 use schema::se::service as service_proto;
@@ -24,6 +28,14 @@ use version;
 mod editor;
 mod logger;
 mod options;
+#[cfg(feature = "standalone")]
+mod standalone;
+
+type Logger = slog::Logger<
+    sync::Arc<slog::SendSyncRefUnwindSafeDrain<Ok = (), Err = slog::Never> + Send + Sync>,
+>;
+
+type RpcError = prost_simple_rpc::error::Error<error::NestedError>;
 
 /// Runs the semantic editor core.
 ///
@@ -41,135 +53,188 @@ pub fn run() -> error::Result<()> {
     "options" => format!("{:?}", options));
 
     let editor = editor::SemanticEditor::new(log.new(o!("component" => "editor")));
-    let server = service_proto::SemanticEditorServer::new(editor);
+    let server_handler = service_proto::SemanticEditorServer::new(editor);
 
     let addr = "127.0.0.1:12345".parse()?;
-    run_websocket_server(log, addr, server)?;
+
+    // Because the borrowchecker is tripping
+    // TODO(dflemstr): there must be a way to avoid this.
+    #[allow(unsafe_code)]
+    let log: Logger = unsafe { mem::transmute(log) };
+
+    run_server(log, addr, server_handler)?;
     Ok(())
 }
 
-fn run_websocket_server<H>(
-    log: slog::Logger,
-    addr: net::SocketAddr,
-    handler: H,
-) -> error::Result<()>
+fn run_server<H>(log: Logger, addr: net::SocketAddr, handler: H) -> error::Result<()>
 where
-    H: prost_simple_rpc::handler::Handler,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
-    let log = log.new(o!("addr" => addr.to_string()));
+    use futures::Future;
+
+    let addr_string = addr.to_string();
+    let log = log.new(o!("addr" => addr_string));
+    let err_log = log.clone();
     let listener = tokio::net::TcpListener::bind(&addr)?;
-
-    let error_log = log.clone();
-    let server = listener
-        .incoming()
-        .map_err(|e| failure::Error::from(e))
-        .for_each(move |sock| handle_socket(log.clone(), handler.clone(), sock))
-        .map_err(move |e| error!(error_log, "Error in websocket server: {}", e));
-
-    tokio::run(server);
+    let future = run_listener(log, listener, handler)
+        .map_err(move |err| error!(err_log, "could not run server listener: {:?}", err));
+    tokio::run(future);
     Ok(())
 }
 
-fn handle_socket<H>(
-    log: slog::Logger,
-    handler: H,
-    sock: tokio::net::TcpStream,
-) -> Box<Future<Item = (), Error = error::Error> + Send>
+#[async]
+fn run_listener<H>(log: Logger, listener: tokio::net::TcpListener, handler: H) -> error::Result<()>
 where
-    H: prost_simple_rpc::handler::Handler,
+    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
 {
-    Box::new(
-        tokio_tungstenite::accept_async(sock)
-            .map_err(|e| failure::Error::from(e))
-            .map(move |ws_stream| handle_ws_stream(log, handler, ws_stream)),
-    )
-}
-
-fn handle_ws_stream<H>(
-    log: slog::Logger,
-    handler: H,
-    ws_stream: tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>,
-) where
-    H: prost_simple_rpc::handler::Handler,
-{
-    let (sink, stream) = ws_stream.split();
-    let (tx, rx) = futures::sync::mpsc::unbounded();
-    let ws_reader = stream
-        .map_err(|e| failure::Error::from(e))
-        .for_each(move |message| {
-            use prost::Message;
-
-            let tx = tx.clone();
-            let handler = handler.clone();
-            let log = log.clone();
-
-            let data = message.into_data();
-            // TODO(dflemstr): don't panic on errors here
-            let request = websocket_proto::Request::decode::<bytes::Bytes>(data.into()).unwrap();
-            let id = uuid::Uuid::from_bytes(&request.id).unwrap();
-            debug!(log, "Received request";
-            "request-id" => id.to_string());
-
-            handle_request(handler, request)
-                .map_err(|e| failure::Error::from(e))
-                .and_then(move |r| {
-                    debug!(log, "Sending response";
-                    "request-id" => id.to_string());
-                    let message = tungstenite::Message::binary(encode(r)?);
-                    tx.unbounded_send(message)?;
-                    Ok(())
-                })
-        });
-    let ws_writer = rx.fold(sink, |mut sink, msg| {
-        sink.start_send(msg).unwrap();
-        Ok(sink)
-    });
-    let connection = ws_reader
-        .map(|_| ())
-        .map_err(|_| ())
-        .select(ws_writer.map(|_| ()).map_err(|_| ()));
-    tokio::spawn(connection.map(|_| ()).map_err(|_| ()));
-}
-
-fn handle_request<H>(
-    mut handler: H,
-    request: websocket_proto::Request,
-) -> Box<Future<Item = websocket_proto::Response, Error = failure::Error> + Send>
-where
-    H: prost_simple_rpc::handler::Handler,
-{
-    use prost_simple_rpc::descriptor::MethodDescriptor;
-    let service_name = <H::Descriptor as prost_simple_rpc::descriptor::ServiceDescriptor>::name();
-
-    if request.service_name != service_name {
-        return Box::new(futures::future::ok(websocket_proto::Response {
-            id: request.id,
-            data: vec![],
-            error: websocket_proto::response::Error::ErrorServiceNotFound.into(),
-        }));
+    #[async]
+    for socket in listener.incoming() {
+        let local_addr = socket.local_addr()?;
+        let peer_addr = socket.peer_addr()?;
+        let log = log.new(
+            o!("local_addr" => local_addr.to_string(), "peer_addr" => peer_addr.to_string()),
+        );
+        await!(handle_socket(log, handler.clone(), socket))?;
     }
 
-    let methods = <H::Descriptor as prost_simple_rpc::descriptor::ServiceDescriptor>::methods();
+    Ok(())
+}
+
+#[async]
+fn handle_socket<H>(log: Logger, handler: H, sock: tokio::net::TcpStream) -> error::Result<()>
+where
+    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+{
+    let ws_stream = await!(tokio_tungstenite::accept_async(sock))?;
+    match await!(handle_ws_stream(log.clone(), handler, ws_stream)) {
+        Ok(()) => (),
+        Err(err) => error!(log, "websocket stream terminated: {:?}", err),
+    }
+    Ok(())
+}
+
+#[async]
+fn handle_ws_stream<H>(
+    log: Logger,
+    handler: H,
+    ws_stream: tokio_tungstenite::WebSocketStream<tokio::net::TcpStream>,
+) -> error::Result<()>
+where
+    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+{
+    use futures::Future;
+    use futures::Stream;
+
+    let (sink, stream) = ws_stream.split();
+    let (tx, rx) = futures::sync::mpsc::unbounded();
+
+    let ws_reader = run_ws_reader(log, handler, stream, tx);
+    let ws_writer = run_ws_writer(sink, rx);
+
+    await!(ws_reader.select(ws_writer).map_err(|(e, _)| e))?;
+
+    Ok(())
+}
+
+#[async]
+fn run_ws_reader<H, S>(
+    log: Logger,
+    handler: H,
+    stream: S,
+    response_tx: futures::sync::mpsc::UnboundedSender<tungstenite::Message>,
+) -> error::Result<()>
+where
+    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+    S: futures::Stream<Item = tungstenite::Message, Error = tungstenite::Error> + 'static,
+{
+    use prost::Message;
+
+    #[async]
+    for message in stream {
+        let handler = handler.clone();
+        let data = message.into_data();
+        let request = websocket_proto::Request::decode::<bytes::Bytes>(data.into())?;
+        let id = uuid::Uuid::from_bytes(&request.id)?;
+        debug!(log, "Received request";
+        "request-id" => id.to_string());
+
+        let response = await!(handle_ws_request(handler, request))?;
+
+        debug!(log, "Sending response";
+        "request-id" => id.to_string());
+
+        let message = tungstenite::Message::binary(encode(response)?);
+
+        response_tx.unbounded_send(message)?;
+    }
+
+    Ok(())
+}
+
+#[async]
+fn run_ws_writer<S>(mut sink: S,
+                    response_rx: futures::sync::mpsc::UnboundedReceiver<tungstenite::Message>)
+-> error::Result<()>
+    where S: futures::Sink<SinkItem = tungstenite::Message, SinkError = tungstenite::Error> + 'static {
+    use futures::Stream;
+
+    #[async]
+    for msg in response_rx.map_err(|_| failure::err_msg("broken response pipe")) {
+        sink.start_send(msg)?;
+    }
+
+    Ok(())
+}
+
+#[async]
+fn handle_ws_request<H>(
+    handler: H,
+    request: websocket_proto::Request,
+) -> error::Result<websocket_proto::Response>
+where
+    H: prost_simple_rpc::handler::Handler<Error =RpcError>,
+{
+    use prost_simple_rpc::descriptor::MethodDescriptor;
+    use prost_simple_rpc::descriptor::ServiceDescriptor;
+
+    let service_name = H::Descriptor::name();
+    let methods = H::Descriptor::methods();
+
+    if request.service_name != service_name {
+        return Ok(error_response(
+            request.id,
+            websocket_proto::response::Error::ErrorServiceNotFound,
+        ));
+    }
 
     if let Some(method_descriptor) = methods.iter().find(|m| request.method_name == m.name()) {
-        let data = request.data;
-        let id = request.id;
-        Box::new(
-            handler
-                .call(*method_descriptor, data.into())
-                .map(|r| websocket_proto::Response {
-                    id: id,
-                    data: r.to_vec(),
-                    error: websocket_proto::response::Error::ErrorNone.into(),
-                })
-                .map_err(Into::into),
-        )
+        let method_descriptor = method_descriptor.clone();
+        let response = await!(handler.call(method_descriptor, request.data.into()))?;
+        Ok(data_response(request.id, response.to_vec()))
     } else {
-        Box::new(futures::future::ok(websocket_proto::Response {
-            id: request.id,
-            data: vec![],
-            error: websocket_proto::response::Error::ErrorMethodNotFound.into(),
-        }))
+        Ok(error_response(
+            request.id,
+            websocket_proto::response::Error::ErrorMethodNotFound,
+        ))
+    }
+}
+
+fn data_response(request_id: Vec<u8>, data: Vec<u8>) -> websocket_proto::Response {
+    websocket_proto::Response {
+        id: request_id,
+        data,
+        error: websocket_proto::response::Error::ErrorNone.into(),
+    }
+}
+
+fn error_response(
+    request_id: Vec<u8>,
+    error: websocket_proto::response::Error,
+) -> websocket_proto::Response {
+    websocket_proto::Response {
+        id: request_id,
+        data: vec![],
+        error: error.into(),
     }
 }
 

@@ -5,10 +5,13 @@ publish = false
 version = "0.1.0"
 
 [build-dependencies]
+brotli = "1.2.0"
+failure = "0.1.1"
 heck = "0.3.0"
 prost-build = "0.3.2"
-prost-simple-rpc-build = "0.1.1"
+prost-simple-rpc-build = "0.1.2"
 vergen = "0.1.1"
+walkdir = "2.1.4"
 
 [dependencies]
 bytes = "0.4.6"
@@ -16,7 +19,7 @@ failure = "0.1.1"
 futures = "0.1.18"
 prost = "0.3.2"
 prost-derive = "0.3.2"
-prost-simple-rpc = "0.1.1"
+prost-simple-rpc = "0.1.4"
 pulldown-cmark = "0.1.2"
 slog-scope = "4.0.1"
 slog-stdlog = "3.0.2"
@@ -50,6 +53,7 @@ rev = "25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
 default = []
 journald = ["slog-journald"]
 lint = []
+standalone = []
 syslog = ["slog-syslog"]
 
 [lib]
@@ -80,6 +84,7 @@ git = "https://github.com/ngg/prost.git"
 [target."cfg(not(target_arch = \"wasm32\"))"]
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
+brotli-decompressor = "1.2.1"
 slog-async = "2.2.0"
 slog-json = "2.2.0"
 slog-term = "2.3.0"

@@ -1,6 +1,5 @@
 use std::fs;
 
-use failure;
 use futures;
 use slog;
 
@@ -19,7 +18,7 @@ impl SemanticEditor {
 }
 
 impl service_proto::SemanticEditor for SemanticEditor {
-    type Error = failure::Compat<failure::Error>;
+    type Error = error::NestedError;
     type PerformActionFuture =
         Box<::futures::Future<Item = service_proto::ActionResponse, Error = Self::Error> + Send>;
     type ListFilesFuture =
@@ -48,9 +47,9 @@ impl service_proto::SemanticEditor for SemanticEditor {
                         })
                         .collect(),
                 ).map(|file| service_proto::ListFilesResponse { file })
-                    .map_err(|e: error::Error| e.compat()),
+                    .map_err(error::nested_error),
             ),
-            Err(err) => Box::new(futures::future::err(error::Error::from(err).compat())),
+            Err(err) => Box::new(futures::future::err(error::nested_error(error::Error::from(err)))),
         }
     }
 }

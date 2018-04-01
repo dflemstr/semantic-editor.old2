@@ -96,7 +96,7 @@ impl<D> prost_simple_rpc::handler::Handler for WebSocketRpc<D>
 where
     D: prost_simple_rpc::descriptor::ServiceDescriptor + Clone + Send + 'static,
 {
-    type Error = failure::Compat<error::Error>;
+    type Error = error::NestedError;
     type Descriptor = D;
     type CallFuture = CallFuture;
 
@@ -145,13 +145,13 @@ impl<D> futures::Future for OpenFuture<D> {
 
 impl futures::Future for CallFuture {
     type Item = bytes::Bytes;
-    type Error = failure::Compat<error::Error>;
+    type Error = error::NestedError;
 
     fn poll(&mut self) -> futures::Poll<Self::Item, Self::Error> {
         match self.0.poll() {
             Ok(futures::Async::Ready(data)) => Ok(futures::Async::Ready(data.into())),
             Ok(futures::Async::NotReady) => Ok(futures::Async::NotReady),
-            Err(ref err) => Err(failure::Error::from(*err).compat()),
+            Err(ref err) => Err(error::nested_error(failure::Error::from(*err))),
         }
     }
 }

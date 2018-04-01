@@ -22,6 +22,8 @@
 #![deny(unused_qualifications)]
 #![deny(non_camel_case_types)]
 
+#[cfg(not(target_arch = "wasm32"))]
+extern crate brotli_decompressor;
 extern crate bytes;
 extern crate failure;
 extern crate futures_await as futures;
