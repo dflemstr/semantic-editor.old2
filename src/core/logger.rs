@@ -30,10 +30,22 @@ pub fn init(options: &super::options::Options) -> slog::Logger {
     let decorator = builder.build();
     let drain = slog_term::FullFormat::new(decorator).build().fuse();
 
-    let log = config_log_1(drain, &options);
+    let log = config_log_0(drain, &options);
+
     slog_scope::set_global_logger(log.clone()).cancel_reset();
     slog_stdlog::init().unwrap();
     log
+}
+
+fn config_log_0<D>(drain: D, options: &super::options::Options) -> slog::Logger
+    where
+        D: slog::Drain<Ok = (), Err = slog::Never> + Send + 'static,
+{
+    if options.silent {
+        config_log_1(slog::Discard, options)
+    } else {
+        config_log_1(drain, options)
+    }
 }
 
 #[cfg(feature = "syslog")]
@@ -70,12 +82,12 @@ where
     if options.journald {
         use slog::Drain;
         let journald_drain = slog_journald::JournaldDrain;
-        config_log_final(
+        config_log_3(
             slog::Duplicate::new(drain, journald_drain).ignore_res(),
             options,
         )
     } else {
-        config_log_final(drain, options)
+        config_log_3(drain, options)
     }
 }
 
@@ -84,7 +96,31 @@ fn config_log_2<D>(drain: D, options: &super::options::Options) -> slog::Logger
 where
     D: slog::Drain<Ok = (), Err = slog::Never> + Send + 'static,
 {
-    config_log_final(drain, options)
+    config_log_3(drain, options)
+}
+
+fn config_log_3<D>(drain: D, options: &super::options::Options) -> slog::Logger
+where
+    D: slog::Drain<Ok = (), Err = slog::Never> + Send + 'static,
+{
+    use slog::Drain;
+    if options.debug {
+        config_log_final(drain, options)
+    } else {
+        let total = options.verbose as i32 - options.quiet as i32;
+
+        let level = match total {
+            n if n < -3 => return config_log_final(slog::Discard, options),
+            -3 => slog::Level::Critical,
+            -2 => slog::Level::Error,
+            -1 => slog::Level::Warning,
+            0 => slog::Level::Info,
+            1 => slog::Level::Debug,
+            _ => slog::Level::Trace,
+        };
+
+        config_log_final(slog::LevelFilter::new(drain, level).ignore_res(), options)
+    }
 }
 
 fn config_log_final<D>(drain: D, _options: &super::options::Options) -> slog::Logger
