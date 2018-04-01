@@ -1,4 +1,4 @@
-# `semantic-editor`
+# `semantic-editor` [![CircleCI](https://circleci.com/gh/dflemstr/semantic-editor.svg?style=svg)](https://circleci.com/gh/dflemstr/semantic-editor)
 
 A versatile editor for different kinds of content.
 
