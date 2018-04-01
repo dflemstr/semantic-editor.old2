@@ -7,15 +7,15 @@ use super::Borrow;
 use tokio_executor::Enter;
 use tokio_executor::park::Unpark;
 
-use futures::{Future, Async};
-use futures::executor::{self, Spawn, UnsafeNotify, NotifyHandle};
+use futures::{Async, Future};
+use futures::executor::{self, NotifyHandle, Spawn, UnsafeNotify};
 
 use std::cell::UnsafeCell;
 use std::fmt::{self, Debug};
 use std::mem;
 use std::ptr;
-use std::sync::atomic::Ordering::{Relaxed, SeqCst, Acquire, Release, AcqRel};
-use std::sync::atomic::{AtomicPtr, AtomicBool, AtomicUsize};
+use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release, SeqCst};
+use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicUsize};
 use std::sync::{Arc, Weak};
 use std::usize;
 use std::thread;
@@ -140,7 +140,8 @@ pub struct Scheduled<'a, U: 'a> {
 }
 
 impl<U> Scheduler<U>
-    where U: Unpark,
+where
+    U: Unpark,
 {
     /// Constructs a new, empty `Scheduler`
     ///
@@ -206,11 +207,9 @@ impl<U> Scheduler<U>
     ///
     /// This function should be called whenever the caller is notified via a
     /// wakeup.
-    pub fn tick(&mut self, enter: &mut Enter, num_futures: &mut usize) -> bool
-    {
+    pub fn tick(&mut self, enter: &mut Enter, num_futures: &mut usize) -> bool {
         let mut ret = false;
-        let tick = self.inner.tick_num.fetch_add(1, SeqCst)
-            .wrapping_add(1);
+        let tick = self.inner.tick_num.fetch_add(1, SeqCst).wrapping_add(1);
 
         loop {
             let node = match unsafe { self.inner.dequeue(Some(tick)) } {
@@ -242,7 +241,7 @@ impl<U> Scheduler<U>
                     let node = ptr2arc(node);
                     assert!((*node.next_all.get()).is_null());
                     assert!((*node.prev_all.get()).is_null());
-                    continue
+                    continue;
                 };
 
                 // We're going to need to be very careful if the `poll`
@@ -363,8 +362,7 @@ impl Task {
 
 impl fmt::Debug for Task {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("Task")
-            .finish()
+        fmt.debug_struct("Task").finish()
     }
 }
 
@@ -558,7 +556,7 @@ impl<U> List<U> {
 
         self.len += 1;
 
-        return ptr
+        return ptr;
     }
 
     /// Pop an element from the front of the list
@@ -610,7 +608,7 @@ impl<U> List<U> {
 
         self.len -= 1;
 
-        return node
+        return node;
     }
 }
 
@@ -727,7 +725,7 @@ impl<U> Drop for Node<U> {
 fn arc2ptr<T>(ptr: Arc<T>) -> *const T {
     let addr = &*ptr as *const T;
     mem::forget(ptr);
-    return addr
+    return addr;
 }
 
 unsafe fn ptr2arc<T>(ptr: *const T) -> Arc<T> {

@@ -5,19 +5,21 @@ publish = false
 version = "0.1.0"
 
 [build-dependencies]
+heck = "0.3.0"
+prost-build = "0.3.2"
+prost-simple-rpc-build = "0.1.1"
 vergen = "0.1.1"
-
-[build-dependencies.prost-build]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
 
 [dependencies]
 bytes = "0.4.6"
 failure = "0.1.1"
-failure_derive = "0.1.1"
 futures = "0.1.18"
-futures-await = "0.1.0"
+prost = "0.3.2"
+prost-derive = "0.3.2"
+prost-simple-rpc = "0.1.1"
 pulldown-cmark = "0.1.2"
+slog-scope = "4.0.1"
+slog-stdlog = "3.0.2"
 tokio-executor = "0.1.1"
 uuid = "0.6.1"
 
@@ -25,21 +27,10 @@ uuid = "0.6.1"
 optional = true
 version = "0.0.188"
 
-[dependencies.log]
-features = ["release_max_level_trace", "max_level_trace"]
-version = "0.4.1"
-
-[dependencies.prost]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
-
-[dependencies.prost-derive]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
-
-[dependencies.prost-types]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
+[dependencies.futures-await]
+branch = "0.1"
+git = "https://github.com/ngg/futures-await"
+version = "0.1"
 
 [dependencies.semantic]
 path = "semantic"
@@ -47,15 +38,62 @@ path = "semantic"
 [dependencies.semantic-derive]
 path = "semantic-derive"
 
+[dependencies.slog]
+features = ["max_level_trace", "release_max_level_trace"]
+version = "2.2.3"
+
 [dependencies.wasm-bindgen]
 git = "https://github.com/alexcrichton/wasm-bindgen"
 
 [features]
 default = []
-lint = ["clippy"]
+journald = ["slog-journald"]
+lint = []
+syslog = ["slog-syslog"]
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[patch]
+
+[patch.crates-io]
+
+[patch.crates-io.prost]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
+
+[patch.crates-io.prost-build]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
+
+[patch.crates-io.prost-derive]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
+
+[patch.crates-io.prost-types]
+branch = "nightly-proc-macro2"
+git = "https://github.com/ngg/prost.git"
+
+[target]
+
+[target."cfg(not(target_arch = \"wasm32\"))"]
+
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies]
+slog-async = "2.2.0"
+slog-json = "2.2.0"
+slog-term = "2.3.0"
+structopt = "0.2.6"
+tokio = "0.1.4"
+tokio-tungstenite = "0.5.1"
+tungstenite = "0.5.3"
+
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies.slog-journald]
+optional = true
+version = "2.0.0"
+
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies.slog-syslog]
+optional = true
+version = "0.11.0"
 
 [workspace]
 members = ["semantic", "semantic-derive"]

@@ -1,4 +1,4 @@
-import { Microtask } from '../wasm/semantic_editor';
+import { Microtask } from '../../../wasm/semantic_editor';
 
 export function scheduleMicrotask(microtask: Microtask) {
   window.setTimeout(() => {

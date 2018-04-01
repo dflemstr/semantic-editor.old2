@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { Value } from 'slate'
-import { Editor } from 'slate-react'
-import { Layout, Tree, Menu, Input, Icon } from 'antd';
-import { SemanticEditor, init as wasmInit } from './wasm/semantic_editor'
+import { SemanticEditor, FileListing } from './wasm/semantic_editor'
 import { booted as wasmBooted } from './wasm/semantic_editor_bg'
-
-const { Sider, Content } = Layout;
-const { TreeNode } = Tree;
-const { Search } = Input;
+import { Alignment, MenuItem, Navbar, NavbarGroup,
+  NavbarHeading
+} from "@blueprintjs/core";
+import "@blueprintjs/core/lib/css/blueprint.css";
+import NavbarMenu from "./components/NavbarMenu";
 
 let editor: SemanticEditor;
 
 let editorBooted = wasmBooted.then(async () => {
-  wasmInit();
-  editor = await new Promise<SemanticEditor>((resolve, reject) => SemanticEditor.new('wss://echo.websocket.org', resolve, reject));
-  editor.send_rpc();
+  editor = await new Promise<SemanticEditor>((resolve, reject) => SemanticEditor.new('ws://localhost:12345', resolve, reject));
+  const files = await new Promise<FileListing>((resolve, reject) => editor.list_files("", resolve, reject));
+  for (let i = 0; i < files.fileLength(); i++) {
+    const file = files.file(i);
+    console.log(file.path(), file.isRegular(), file.isDirectory());
+  }
 });
 
 interface Props {
@@ -34,7 +36,7 @@ class App extends React.Component<Props, State> {
 
   componentDidMount() {
     editorBooted.then(() => {
-      const value = Value.fromJSON({ document: JSON.parse(editor.document()) });
+      const value = Value.fromJSON({ document: JSON.parse("{}") });
       this.setState({ value });
     })
   }
@@ -43,33 +45,40 @@ class App extends React.Component<Props, State> {
   }
 
   render() {
-    return <Layout>
-      <Sider collapsible>
-        <div style={{ overflowY: 'auto', height: 'calc(100vh - 48px)' }}>
-          <div style={{ margin: '8px' }}>
-            <Search placeholder='Search...'/>
-          </div>
-          <Menu theme="dark" mode="inline">
-            <Menu.Item key="overview">
-              <Icon type="home"/><span>Overview</span>
-            </Menu.Item>
-            <Menu.Item key="settings">
-              <Icon type="setting"/><span>Settings</span>
-            </Menu.Item>
-          </Menu>
-          <div style={{ background: '#fff' }}>
-            <Tree showLine>
-              <TreeNode title={"foo"} key={1}/>
-            </Tree>
-          </div>
-        </div>
-      </Sider>
-      <Layout style={{ overflowY: 'auto', height: '100vh' }}>
-        <Content style={{ overflow: 'initial', backgroundColor: '#fff', padding: '16px' }}>
-          <Editor value={this.state.value} onChange={(c: any) => App.onChange(c)}/>
-        </Content>
-      </Layout>
-    </Layout>;
+    return <div>
+      <Navbar>
+        <NavbarGroup align={Alignment.LEFT}>
+          <NavbarMenu title="File">
+            <MenuItem text="New">
+              <MenuItem text="Text file"/>
+              <MenuItem text="Markdown file"/>
+            </MenuItem>
+            <MenuItem text="Open..."/>
+          </NavbarMenu>
+          <NavbarMenu title="Edit">
+          </NavbarMenu>
+          <NavbarMenu title="View">
+          </NavbarMenu>
+          <NavbarMenu title="Navigate">
+          </NavbarMenu>
+          <NavbarMenu title="Analyze">
+          </NavbarMenu>
+          <NavbarMenu title="Refactor">
+          </NavbarMenu>
+          <NavbarMenu title="Build">
+          </NavbarMenu>
+          <NavbarMenu title="Run">
+          </NavbarMenu>
+          <NavbarMenu title="Tools">
+          </NavbarMenu>
+          <NavbarMenu title="Help">
+          </NavbarMenu>
+        </NavbarGroup>
+        <NavbarGroup align={Alignment.RIGHT}>
+          <NavbarHeading>Semantic Editor</NavbarHeading>
+        </NavbarGroup>
+      </Navbar>
+    </div>;
   }
 }
 

@@ -110,10 +110,10 @@ mod scheduler;
 use self::scheduler::Scheduler;
 
 use tokio_executor::{self, Enter, SpawnError};
-use tokio_executor::park::{Park, Unpark, ParkThread};
+use tokio_executor::park::{Park, ParkThread, Unpark};
 
 use futures::{executor, Async, Future};
-use futures::future::{self, Executor, ExecuteError, ExecuteErrorKind};
+use futures::future::{self, ExecuteError, ExecuteErrorKind, Executor};
 
 use std::fmt;
 use std::cell::Cell;
@@ -214,7 +214,8 @@ thread_local!(static CURRENT: CurrentRunner = CurrentRunner {
 #[doc(hidden)]
 #[allow(deprecated)]
 pub fn run<F, R>(f: F) -> R
-    where F: FnOnce(&mut Context) -> R
+where
+    F: FnOnce(&mut Context) -> R,
 {
     let mut context = Context {
         cancel: Cell::new(false),
@@ -251,7 +252,8 @@ pub fn run<F, R>(f: F) -> R
 /// [`CurrentThread`]: struct.CurrentThread.html
 /// [mod]: index.html
 pub fn block_on_all<F>(future: F) -> Result<F::Item, F::Error>
-    where F: Future,
+where
+    F: Future,
 {
     let mut current_thread = CurrentThread::new();
 
@@ -275,7 +277,8 @@ pub fn block_on_all<F>(future: F) -> Result<F::Item, F::Error>
 ///
 /// [`tokio::spawn`]: ../fn.spawn.html
 pub fn spawn<F>(future: F)
-    where F: Future<Item = (), Error = ()> + 'static
+where
+    F: Future<Item = (), Error = ()> + 'static,
 {
     TaskExecutor::current()
         .spawn_local(Box::new(future))
@@ -315,7 +318,8 @@ impl<P: Park> CurrentThread<P> {
     ///
     /// This internally queues the future to be executed once `run` is called.
     pub fn spawn<F>(&mut self, future: F) -> &mut Self
-        where F: Future<Item = (), Error = ()> + 'static,
+    where
+        F: Future<Item = (), Error = ()> + 'static,
     {
         self.borrow().spawn_local(Box::new(future));
         self
@@ -334,9 +338,9 @@ impl<P: Park> CurrentThread<P> {
     ///
     /// The caller is responsible for ensuring that other spawned futures
     /// complete execution.
-    pub fn block_on<F>(&mut self, future: F)
-                       -> Result<F::Item, BlockError<F::Error>>
-        where F: Future
+    pub fn block_on<F>(&mut self, future: F) -> Result<F::Item, BlockError<F::Error>>
+    where
+        F: Future,
     {
         let mut enter = tokio_executor::enter().unwrap();
         self.enter(&mut enter).block_on(future)
@@ -351,9 +355,7 @@ impl<P: Park> CurrentThread<P> {
 
     /// Run the executor to completion, blocking the thread until all
     /// spawned futures have completed **or** `duration` time has elapsed.
-    pub fn run_timeout(&mut self, duration: Duration)
-                       -> Result<(), RunTimeoutError>
-    {
+    pub fn run_timeout(&mut self, duration: Duration) -> Result<(), RunTimeoutError> {
         let mut enter = tokio_executor::enter().unwrap();
         self.enter(&mut enter).run_timeout(duration)
     }
@@ -361,9 +363,7 @@ impl<P: Park> CurrentThread<P> {
     /// Perform a single iteration of the event loop.
     ///
     /// This function blocks the current thread even if the executor is idle.
-    pub fn turn(&mut self, duration: Option<Duration>)
-                -> Result<Turn, TurnError>
-    {
+    pub fn turn(&mut self, duration: Option<Duration>) -> Result<Turn, TurnError> {
         let mut enter = tokio_executor::enter().unwrap();
         self.enter(&mut enter).turn(duration)
     }
@@ -385,17 +385,19 @@ impl<P: Park> CurrentThread<P> {
 }
 
 impl tokio_executor::Executor for CurrentThread {
-    fn spawn(&mut self, future: Box<Future<Item = (), Error = ()> + Send>)
-             -> Result<(), SpawnError>
-    {
+    fn spawn(
+        &mut self,
+        future: Box<Future<Item = (), Error = ()> + Send>,
+    ) -> Result<(), SpawnError> {
         self.borrow().spawn_local(future);
         Ok(())
     }
 
     #[cfg(feature = "unstable-futures")]
-    fn spawn2(&mut self, _future: Box<futures2::Future<Item = (), Error = futures2::Never> + Send>)
-              -> Result<(), futures2::executor::SpawnError>
-    {
+    fn spawn2(
+        &mut self,
+        _future: Box<futures2::Future<Item = (), Error = futures2::Never> + Send>,
+    ) -> Result<(), futures2::executor::SpawnError> {
         panic!("Futures 0.2 integration is not available for current_thread");
     }
 }
@@ -416,7 +418,8 @@ impl<'a, P: Park> Entered<'a, P> {
     ///
     /// This internally queues the future to be executed once `run` is called.
     pub fn spawn<F>(&mut self, future: F) -> &mut Self
-        where F: Future<Item = (), Error = ()> + 'static,
+    where
+        F: Future<Item = (), Error = ()> + 'static,
     {
         self.executor.borrow().spawn_local(Box::new(future));
         self
@@ -435,17 +438,17 @@ impl<'a, P: Park> Entered<'a, P> {
     ///
     /// The caller is responsible for ensuring that other spawned futures
     /// complete execution.
-    pub fn block_on<F>(&mut self, future: F)
-                       -> Result<F::Item, BlockError<F::Error>>
-        where F: Future
+    pub fn block_on<F>(&mut self, future: F) -> Result<F::Item, BlockError<F::Error>>
+    where
+        F: Future,
     {
         let mut future = executor::spawn(future);
         let notify = self.executor.scheduler.notify();
 
         loop {
-            let res = self.executor.borrow().enter(self.enter, || {
-                future.poll_future_notify(&notify, 0)
-            });
+            let res = self.executor
+                .borrow()
+                .enter(self.enter, || future.poll_future_notify(&notify, 0));
 
             match res {
                 Ok(Async::Ready(e)) => return Ok(e),
@@ -464,24 +467,19 @@ impl<'a, P: Park> Entered<'a, P> {
     /// Run the executor to completion, blocking the thread until **all**
     /// spawned futures have completed.
     pub fn run(&mut self) -> Result<(), RunError> {
-        self.run_timeout2(None)
-            .map_err(|_| RunError { _p: () })
+        self.run_timeout2(None).map_err(|_| RunError { _p: () })
     }
 
     /// Run the executor to completion, blocking the thread until all
     /// spawned futures have completed **or** `duration` time has elapsed.
-    pub fn run_timeout(&mut self, duration: Duration)
-                       -> Result<(), RunTimeoutError>
-    {
+    pub fn run_timeout(&mut self, duration: Duration) -> Result<(), RunTimeoutError> {
         self.run_timeout2(Some(duration))
     }
 
     /// Perform a single iteration of the event loop.
     ///
     /// This function blocks the current thread even if the executor is idle.
-    pub fn turn(&mut self, duration: Option<Duration>)
-                -> Result<Turn, TurnError>
-    {
+    pub fn turn(&mut self, duration: Option<Duration>) -> Result<Turn, TurnError> {
         if !self.tick() {
             let res = match duration {
                 Some(duration) => self.executor.park.park_timeout(duration),
@@ -498,9 +496,7 @@ impl<'a, P: Park> Entered<'a, P> {
         Ok(Turn(()))
     }
 
-    fn run_timeout2(&mut self, dur: Option<Duration>)
-                    -> Result<(), RunTimeoutError>
-    {
+    fn run_timeout2(&mut self, dur: Option<Duration>) -> Result<(), RunTimeoutError> {
         if self.executor.is_idle() {
             // Nothing to do
             return Ok(());
@@ -540,9 +536,9 @@ impl<'a, P: Park> Entered<'a, P> {
 
     /// Returns `true` if any futures were processed
     fn tick(&mut self) -> bool {
-        self.executor.scheduler.tick(
-            &mut *self.enter,
-            &mut self.executor.num_futures)
+        self.executor
+            .scheduler
+            .tick(&mut *self.enter, &mut self.executor.num_futures)
     }
 }
 
@@ -579,34 +575,33 @@ impl TaskExecutor {
     }
 
     /// Spawn a future onto the current `CurrentThread` instance.
-    pub fn spawn_local(&mut self, future: Box<Future<Item = (), Error = ()>>)
-                       -> Result<(), SpawnError>
-    {
-        CURRENT.with(|current| {
-            match current.spawn.get() {
-                Some(spawn) => {
-                    unsafe { (*spawn).spawn_local(future) };
-                    Ok(())
-                }
-                None => {
-                    Err(SpawnError::shutdown())
-                }
+    pub fn spawn_local(
+        &mut self,
+        future: Box<Future<Item = (), Error = ()>>,
+    ) -> Result<(), SpawnError> {
+        CURRENT.with(|current| match current.spawn.get() {
+            Some(spawn) => {
+                unsafe { (*spawn).spawn_local(future) };
+                Ok(())
             }
+            None => Err(SpawnError::shutdown()),
         })
     }
 }
 
 impl tokio_executor::Executor for TaskExecutor {
-    fn spawn(&mut self, future: Box<Future<Item = (), Error = ()> + Send>)
-             -> Result<(), SpawnError>
-    {
+    fn spawn(
+        &mut self,
+        future: Box<Future<Item = (), Error = ()> + Send>,
+    ) -> Result<(), SpawnError> {
         self.spawn_local(future)
     }
 
     #[cfg(feature = "unstable-futures")]
-    fn spawn2(&mut self, _future: Box<futures2::Future<Item = (), Error = futures2::Never> + Send>)
-              -> Result<(), futures2::executor::SpawnError>
-    {
+    fn spawn2(
+        &mut self,
+        _future: Box<futures2::Future<Item = (), Error = futures2::Never> + Send>,
+    ) -> Result<(), futures2::executor::SpawnError> {
         panic!("Futures 0.2 integration is not available for current_thread");
     }
 
@@ -622,19 +617,16 @@ impl tokio_executor::Executor for TaskExecutor {
 }
 
 impl<F> Executor<F> for TaskExecutor
-    where F: Future<Item = (), Error = ()> + 'static
+where
+    F: Future<Item = (), Error = ()> + 'static,
 {
     fn execute(&self, future: F) -> Result<(), ExecuteError<F>> {
-        CURRENT.with(|current| {
-            match current.spawn.get() {
-                Some(spawn) => {
-                    unsafe { (*spawn).spawn_local(Box::new(future)) };
-                    Ok(())
-                }
-                None => {
-                    Err(ExecuteError::new(ExecuteErrorKind::Shutdown, future))
-                }
+        CURRENT.with(|current| match current.spawn.get() {
+            Some(spawn) => {
+                unsafe { (*spawn).spawn_local(Box::new(future)) };
+                Ok(())
             }
+            None => Err(ExecuteError::new(ExecuteErrorKind::Shutdown, future)),
         })
     }
 }
@@ -652,13 +644,10 @@ impl<'a> Context<'a> {
 
 impl<'a, U: Unpark> Borrow<'a, U> {
     fn enter<F, R>(&mut self, _: &mut Enter, f: F) -> R
-        where F: FnOnce() -> R,
+    where
+        F: FnOnce() -> R,
     {
-        CURRENT.with(|current| {
-            current.set_spawn(self, || {
-                f()
-            })
-        })
+        CURRENT.with(|current| current.set_spawn(self, || f()))
     }
 }
 
@@ -673,7 +662,8 @@ impl<'a, U: Unpark> SpawnLocal for Borrow<'a, U> {
 
 impl CurrentRunner {
     fn set_spawn<F, R>(&self, spawn: &mut SpawnLocal, f: F) -> R
-        where F: FnOnce() -> R
+    where
+        F: FnOnce() -> R,
     {
         struct Reset<'a>(&'a CurrentRunner);
 

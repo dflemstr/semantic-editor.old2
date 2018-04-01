@@ -8,6 +8,8 @@ import "se/action/action.proto";
 service SemanticEditor {
   // Perform any user-originating action on the editor instance.
   rpc PerformAction (ActionRequest) returns (ActionResponse);
+
+  rpc ListFiles (ListFilesRequest) returns (ListFilesResponse);
 }
 
 // A request to perform an action originating from the user.
@@ -18,4 +20,39 @@ message ActionRequest {
 // A response to an action request.
 message ActionResponse {
 
+}
+
+message ListFilesRequest {
+  string path = 1;
+}
+
+message ListFilesResponse {
+  repeated File file = 1;
+
+  message File {
+    string path = 1;
+
+    oneof kind {
+      Regular regular = 2;
+      Directory directory = 3;
+      Device device = 4;
+      Link link = 5;
+      Pipe pipe = 6;
+      Socket socket = 7;
+    }
+  }
+
+  message Regular {}
+
+  message Directory {}
+
+  message Link {
+    string target = 1;
+  }
+
+  message Device {}
+
+  message Pipe {}
+
+  message Socket {}
 }

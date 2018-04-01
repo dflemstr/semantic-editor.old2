@@ -7,7 +7,24 @@ content.  It is impossible to make syntax errors or break style guides.
 
 This program is in an early state of development!
 
-# Architecture
+## Development
+
+To develop on `semantic-editor`, you need to install:
+
+  - Rust, it's recommended to follow the instructions at <https://rustup.rs/>.
+  - The nightly Rust compiler with `wasm32` support:
+
+    ```text
+    rustup toolchain install nightly
+    rustup target add wasm32-unknown-unknown --toolchain nightly
+    ```
+  - node.js, at least version 8.9.4 (<https://nodejs.org/>)
+  - The `yarn` build tool for node (<https://yarnpkg.com/>)
+  - `wasm-bindgen` from <https://github.com/alexcrichton/wasm-bindgen>
+
+Starting the application should be as simple as doing `yarn start`.
+
+## Architecture
 
 For now, `semantic-editor` doesn't have a frontend on its own, and must use a web browser to render
 itself.
@@ -58,7 +75,7 @@ If the connection between the backend and the frontend is lost, events are buffe
 consolidated when the connection is back up.  This might cause conflicts if the editor state has
 changed significantly in the meantime.
 
-# Semantics
+## Semantics
 
 The editor edits all content semantically.  That means that it's not possible to edit any general
 text file; the editor requires support for each specific content format.
@@ -72,20 +89,3 @@ style guide for each format.
 Since the `semantic-editor` backend is written in Rust, it is possible to use native tools for
 interacting with content.  `semantic-editor` should not implement its own Java linter/highlighter;
 it should bind to `libjvm` and use the Java compiler directly to perform that task!
-
-# Development
-
-To develop on `semantic-editor`, you need to install:
-
-  - Rust, it's recommended to follow the instructions at <https://rustup.rs/>.
-  - The nightly Rust compiler with `wasm32` support:
-
-    ```text
-    rustup toolchain install nightly
-    rustup target add wasm32-unknown-unknown --toolchain nightly
-    ```
-  - node.js, at least version 8.9.4 (<https://nodejs.org/>)
-  - The `yarn` build tool for node (<https://yarnpkg.com/>)
-  - `wasm-bindgen` from <https://github.com/alexcrichton/wasm-bindgen>
-
-Starting the application should be as simple as doing `yarn start`.

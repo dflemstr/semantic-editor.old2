@@ -4,6 +4,7 @@
 #![allow(missing_debug_implementations)]
 #![allow(non_camel_case_types)]
 #![allow(trivial_casts)]
+#![allow(trivial_numeric_casts)]
 
 use std::fmt;
 

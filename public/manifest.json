@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Semantic Editor",
+  "name": "The Editor for editing content Semantically",
   "icons": [
     {
       "src": "favicon.ico",

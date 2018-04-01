@@ -1066,7 +1066,7 @@ impl Markdown {
     fn read<R: io::Read>(mut read: R) -> error::Result<Self> {
         let mut text = String::new();
         read.read_to_string(&mut text)?;
-        let parser = pulldown_cmark::Parser::new(&text);
+        let _parser = pulldown_cmark::Parser::new(&text);
         unimplemented!()
     }
 }
