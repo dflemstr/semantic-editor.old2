@@ -34,10 +34,10 @@ jobs:
             - cargo-cache-{{ arch }}
       - run:
           name: Install wasm-bindgen-cli
-          command: CARGO_TARGET_DIR=.cargo-install/wasm-bindgen-cli cargo install --git https://github.com/alexcrichton/wasm-bindgen.git --rev $(cargo read-manifest --locked | jq '.dependencies[]|select(.name == "wasm-bindgen")|.source' -r | cut -d= -f2) -f
+          command: CARGO_TARGET_DIR=target cargo install --git https://github.com/alexcrichton/wasm-bindgen.git --rev $(cargo read-manifest --locked | jq '.dependencies[]|select(.name == "wasm-bindgen")|.source' -r | cut -d= -f2) -f
       - run:
           name: Install wasm-gc
-          command: CARGO_TARGET_DIR=.cargo-install/wasm-gc cargo install wasm-gc -f
+          command: CARGO_TARGET_DIR=target cargo install wasm-gc -f
       - run:
           name: Build
           command: yarn build
@@ -45,5 +45,4 @@ jobs:
           key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}-{{ epoch }}
           paths:
             - ~/.cargo
-            - ./.cargo_install
             - ./target
