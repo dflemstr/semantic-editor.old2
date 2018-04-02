@@ -12,19 +12,23 @@ This program is in an early state of development!
 To develop on `semantic-editor`, you need to install:
 
   - Rust, it's recommended to follow the instructions at <https://rustup.rs/>.
-  - The nightly Rust compiler with `wasm32` support:
+  - The nightly Rust compiler with `wasm32` support.  You probably want to install the specific
+    one specified in the [rust-toolchain](./rust-toolchain) file in this repo, to get build
+    reproducibility:
 
     ```text
-    rustup toolchain install nightly
-    rustup target add wasm32-unknown-unknown --toolchain nightly
+    rustup toolchain install $(cat rust-toolchain)
+    rustup target add wasm32-unknown-unknown --toolchain $(cat rust-toolchain)
     ```
   - node.js, at least version 8.9.4 (<https://nodejs.org/>)
   - The `yarn` build tool for node (<https://yarnpkg.com/>)
   - `wasm-bindgen` from <https://github.com/alexcrichton/wasm-bindgen>
   - `wasm-gc` via `cargo install wasm-gc`
-  - `cargo-watch` via `cargo install cargo-watch`
+  - `cargo-watch` via `cargo install cargo-watch` (only needed for development)
 
-Starting the application should be as simple as doing `yarn start`.
+Starting the application should be as simple as doing `yarn start`.  It probably takes a while to
+compile everything the first time; wait until everythimg seems to be done then reload your web
+browser.
 
 ## Architecture
 
