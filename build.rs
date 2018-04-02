@@ -18,7 +18,7 @@ fn main() {
                 "src/schema/se/action/action.proto",
                 "src/schema/se/data/format.proto",
                 "src/schema/se/service/service.proto",
-                "src/schema/se/websocket/websocket.proto",
+                "src/schema/se/transport/transport.proto",
             ],
             &["src/schema"],
         )

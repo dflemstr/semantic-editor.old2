@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package se.websocket;
+package se.transport;
 
-// A WebSocket request frame.
+// A transport request frame.
 message Request {
   // The correlation ID of the request.  The server is expected to send a response with the same ID.
   bytes id = 1;
@@ -14,7 +14,7 @@ message Request {
   string method_name = 4;
 }
 
-// A WebSocket response frame.
+// A transport response frame.
 message Response {
   // The correlation ID of the response.  This response is to the request with the matching ID.
   bytes id = 1;
@@ -29,6 +29,7 @@ message Response {
     SERVICE_NOT_FOUND = 2;
     METHOD_NOT_FOUND = 3;
     RUNTIME = 4;
+    BAD_REQUEST = 5;
   }
 
   message Error {

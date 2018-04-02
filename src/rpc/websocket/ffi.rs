@@ -45,15 +45,6 @@ extern "C" {
     pub fn setWebSocketHandler(websocket: &WebSocket, handler: WebSocketHandler);
 }
 
-pub mod uuid {
-    use wasm_bindgen::prelude::*;
-
-    #[wasm_bindgen(module = "uuid")]
-    extern "C" {
-        pub fn v4() -> String;
-    }
-}
-
 #[wasm_bindgen]
 extern "C" {
     pub type WebSocket;

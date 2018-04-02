@@ -27,6 +27,13 @@ extern crate brotli_decompressor;
 extern crate bytes;
 extern crate failure;
 extern crate futures_await as futures;
+#[cfg(not(target_arch = "wasm32"))]
+extern crate hyper;
+#[cfg(not(target_arch = "wasm32"))]
+#[macro_use]
+extern crate lazy_static;
+#[cfg(not(target_arch = "wasm32"))]
+extern crate mime;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
@@ -54,9 +61,7 @@ extern crate structopt;
 extern crate tokio;
 extern crate tokio_executor;
 #[cfg(not(target_arch = "wasm32"))]
-extern crate tokio_tungstenite;
-#[cfg(not(target_arch = "wasm32"))]
-extern crate tungstenite;
+extern crate unicase;
 extern crate uuid;
 extern crate wasm_bindgen;
 

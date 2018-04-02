@@ -19,9 +19,7 @@ use version;
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct SemanticEditor {
-    client: service::SemanticEditorClient<
-        rpc::websocket::WebSocketRpc<service::SemanticEditorDescriptor>,
-    >,
+    client: service::SemanticEditorClient<rpc::http::HttpRpc<service::SemanticEditorDescriptor>>,
 }
 
 #[wasm_bindgen]
@@ -58,14 +56,12 @@ impl SemanticEditor {
             );
         }));
 
-        let future = rpc::websocket::WebSocketRpc::open(log, &url)
-            .map(move |rpc| SemanticEditor {
-                client: service::SemanticEditorClient::new(rpc),
-            })
-            .map(move |e| resolveSemanticEditor(resolve, e))
-            .map_err(move |e| rejectSemanticEditor(reject, &format!("{}", e)));
+        let rpc = rpc::http::HttpRpc::new(log, &url);
+        let semantic_editor = SemanticEditor {
+            client: service::SemanticEditorClient::new(rpc),
+        };
 
-        executor::run(future);
+        resolveSemanticEditor(resolve, semantic_editor);
     }
 
     pub fn list_files(&self, path: &str, resolve: JsValue, reject: JsValue) {

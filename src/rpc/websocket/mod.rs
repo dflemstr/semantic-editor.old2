@@ -11,7 +11,7 @@ use uuid;
 use std::collections;
 use std::marker;
 use std::sync;
-use schema::se::websocket as websocket_proto;
+use schema::se::transport as transport_proto;
 use error;
 
 pub mod ffi;
@@ -100,17 +100,17 @@ where
     type Descriptor = D;
     type CallFuture = CallFuture;
 
-    fn call(&mut self, method: D::Method, input: bytes::Bytes) -> Self::CallFuture {
+    fn call(&self, method: D::Method, input: bytes::Bytes) -> Self::CallFuture {
         use prost_simple_rpc::descriptor::MethodDescriptor;
 
-        let id = uuid::Uuid::parse_str(&ffi::uuid::v4()).unwrap();
+        let id = uuid::Uuid::parse_str(&super::ffi::uuid::v4()).unwrap();
         let log = self.log.new(o!("request-id" => id.to_string()));
 
-        let request = websocket_proto::Request {
+        let request = transport_proto::Request {
             id: id.as_bytes().to_vec(),
             data: input.to_vec(),
-            service_name: D::name().to_owned(),
-            method_name: method.name().to_owned(),
+            service_name: format!("{}.{}", D::package(), D::proto_name()),
+            method_name: method.proto_name().to_owned(),
         };
         debug!(log, "Sending request";
         "request" => format!("{:?}", request));
@@ -166,7 +166,7 @@ impl WebSocketHandler {
     /// Called when the associated WebSocket received new data.
     pub fn onmessage(&self, data: &[u8], _origin: &str) {
         let log = self.log.new(o!("method" => "onmessage"));
-        let response: websocket_proto::Response = match prost::Message::decode(data) {
+        let response: transport_proto::Response = match prost::Message::decode(data) {
             Err(e) => {
                 error!(log, "Failed to decode response";
                 "error" => format!("{}", e));
