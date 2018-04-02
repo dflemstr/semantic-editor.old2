@@ -97,10 +97,12 @@ where
     if req.method() == &hyper::Method::Options {
         let response = hyper::server::Response::new().with_status(hyper::StatusCode::Ok);
         Ok(with_cors_headers(response))
+    } else if is_static_file_request(&req) {
+        Ok(with_cors_headers(serve_static_file(&req)))
     } else if let Some(request) = await!(parse_rpc_request(req))? {
         await!(handle_request(handler, request))
     } else {
-        Ok(hyper::server::Response::new().with_status(hyper::StatusCode::BadRequest))
+        Ok(hyper::server::Response::new().with_status(hyper::StatusCode::NotFound))
     }
 }
 
@@ -177,6 +179,55 @@ fn parse_rpc_request(
     } else {
         Ok(None)
     }
+}
+
+#[cfg(feature = "standalone")]
+fn is_static_file_request(request: &hyper::server::Request) -> bool {
+    standalone::file_exists(canonicalize_path(request.path()))
+}
+
+#[cfg(not(feature = "standalone"))]
+fn is_static_file_request(request: &hyper::server::Request) -> bool {
+    false
+}
+
+#[cfg(feature = "standalone")]
+fn serve_static_file(request: &hyper::server::Request) -> hyper::server::Response {
+    let path = canonicalize_path(request.path());
+
+    if request
+        .headers()
+        .get::<hyper::header::AcceptEncoding>()
+        .map(|e| e.iter().any(|i| i.item == hyper::header::Encoding::Brotli))
+        .unwrap_or(false)
+    {
+        let data = standalone::brotli_compressed_file(path).unwrap();
+        hyper::server::Response::new()
+            .with_status(hyper::StatusCode::Ok)
+            .with_header(hyper::header::ContentEncoding(vec![
+                hyper::header::Encoding::Brotli,
+            ]))
+            .with_body(data)
+    } else {
+        let data = standalone::file(path).unwrap();
+        hyper::server::Response::new()
+            .with_status(hyper::StatusCode::Ok)
+            .with_header(hyper::header::ContentLength(data.len() as u64))
+            .with_body(data)
+    }
+}
+
+fn canonicalize_path(path: &str) -> &str {
+    if path.is_empty() || path == "/" {
+        "index.html"
+    } else {
+        &path[1..]
+    }
+}
+
+#[cfg(not(feature = "standalone"))]
+fn serve_static_file(request: &hyper::server::Request) -> hyper::server::Response {
+    unreachable!()
 }
 
 fn hyper_response(response: transport_proto::Response) -> hyper::server::Response {

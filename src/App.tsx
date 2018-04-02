@@ -1,36 +1,11 @@
 import * as React from 'react';
 import { Value } from 'slate'
-import { SemanticEditor, FileListing } from './wasm/semantic_editor'
-import { booted as wasmBooted } from './wasm/semantic_editor_bg'
 import {
   Alignment, MenuItem, Navbar, NavbarGroup,
   NavbarHeading
 } from "@blueprintjs/core";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import NavbarMenu from "./components/NavbarMenu";
-
-let editor: SemanticEditor;
-
-let editorBooted = wasmBooted.then(async () => {
-  editor = await new Promise<SemanticEditor>((resolve, reject) => SemanticEditor.new('http://localhost:12345', resolve, reject));
-  const files = await new Promise<FileListing>((resolve, reject) => editor.list_files("/", resolve, reject));
-  try {
-    for (let i = 0; i < files.fileLength(); i++) {
-      const file = files.file(i);
-      try {
-        console.log({
-          path: file.path(),
-          isRegular: file.isRegular(),
-          isDirectory: file.isDirectory()
-        });
-      } finally {
-        file.free();
-      }
-    }
-  } finally {
-    files.free();
-  }
-});
 
 interface Props {
 }
@@ -42,16 +17,17 @@ interface State {
 class App extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
+    import('./core').then(editor => {
+      console.log("Editor:", editor.default());
+    });
     this.state = {
       value: Value.fromJSON({})
     };
   }
 
   componentDidMount() {
-    editorBooted.then(() => {
-      const value = Value.fromJSON({ document: JSON.parse("{}") });
-      this.setState({ value });
-    })
+    const value = Value.fromJSON({ document: JSON.parse("{}") });
+    this.setState({ value });
   }
 
   static onChange(change: any) {

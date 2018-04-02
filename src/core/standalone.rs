@@ -7,7 +7,7 @@ pub fn file_exists(name: &str) -> bool {
 }
 
 pub fn file(name: &str) -> Option<Vec<u8>> {
-    compressed_file(name).map(|compressed| {
+    brotli_compressed_file(name).map(|compressed| {
         let mut result = Vec::new();
         brotli_decompressor::BrotliDecompress(&mut io::Cursor::new(compressed), &mut result)
             .unwrap();
@@ -15,7 +15,7 @@ pub fn file(name: &str) -> Option<Vec<u8>> {
     })
 }
 
-pub fn compressed_file(name: &str) -> Option<&'static [u8]> {
+pub fn brotli_compressed_file(name: &str) -> Option<&'static [u8]> {
     FILES.iter().find(|f| f.0 == name).map(|f| f.1)
 }
 

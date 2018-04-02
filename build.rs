@@ -7,6 +7,7 @@ extern crate vergen;
 extern crate walkdir;
 
 use std::env;
+use std::ffi;
 use std::fs;
 use std::path;
 
@@ -59,7 +60,7 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
             if !out_path.exists() {
                 fs::create_dir(out_path)?;
             }
-        } else {
+        } else if relative_path.extension() != Some(ffi::OsStr::new("map")) {
             let compressed_path = with_brotli_extension(&out_path);
             let in_metadata = in_path.metadata()?;
 
@@ -74,7 +75,7 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
                     &mut in_file,
                     &mut compressed_file,
                     &brotli::enc::BrotliEncoderParams {
-                        quality: 9,
+                        quality: 11,
                         size_hint: in_size as usize,
                         ..brotli::enc::BrotliEncoderParams::default()
                     },
