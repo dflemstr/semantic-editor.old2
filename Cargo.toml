@@ -6,6 +6,7 @@ version = "0.1.0"
 
 [build-dependencies]
 brotli = "1.2.0"
+bytesize = "0.2.0"
 failure = "0.1.1"
 heck = "0.3.0"
 prost-build = "0.3.2"

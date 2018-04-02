@@ -1,4 +1,5 @@
 extern crate brotli;
+extern crate bytesize;
 extern crate failure;
 extern crate prost_build;
 extern crate prost_simple_rpc_build;
@@ -79,6 +80,15 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
                     },
                 )?;
             }
+
+            let compressed_metadata = compressed_path.metadata()?;
+
+            println!(
+                ">> compressed {:?}: before: {}, after: {}",
+                relative_path,
+                bytesize::ByteSize::b(in_metadata.len() as u64),
+                bytesize::ByteSize::b(compressed_metadata.len() as u64),
+            );
 
             writeln!(data_rs_file,
             r#"    ({relative_path:?}, include_bytes!(concat!(env!("OUT_DIR"), {data_path:?}))),"#,

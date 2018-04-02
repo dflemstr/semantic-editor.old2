@@ -38,8 +38,8 @@ pub fn init(options: &super::options::Options) -> slog::Logger {
 }
 
 fn config_log_0<D>(drain: D, options: &super::options::Options) -> slog::Logger
-    where
-        D: slog::Drain<Ok = (), Err = slog::Never> + Send + 'static,
+where
+    D: slog::Drain<Ok = (), Err = slog::Never> + Send + 'static,
 {
     if options.silent {
         config_log_1(slog::Discard, options)
