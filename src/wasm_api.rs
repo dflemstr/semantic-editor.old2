@@ -19,7 +19,8 @@ use version;
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct SemanticEditor {
-    client: service::SemanticEditorClient<rpc::http::HttpRpc<service::SemanticEditorDescriptor>>,
+    client:
+        service::SemanticEditorClient<rpc::http::HttpRpcClient<service::SemanticEditorDescriptor>>,
 }
 
 #[wasm_bindgen]
@@ -56,7 +57,7 @@ impl SemanticEditor {
             );
         }));
 
-        let rpc = rpc::http::HttpRpc::new(log, &url);
+        let rpc = rpc::http::HttpRpcClient::new(log, &url);
         let semantic_editor = SemanticEditor {
             client: service::SemanticEditorClient::new(rpc),
         };

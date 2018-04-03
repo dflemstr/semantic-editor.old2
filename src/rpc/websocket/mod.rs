@@ -18,7 +18,7 @@ pub mod ffi;
 
 /// An RPC connection over a WebSocket.
 #[derive(Clone, Debug)]
-pub struct WebSocketRpc<D> {
+pub struct WebSocketRpcClient<D> {
     log: slog::Logger,
     inner: sync::Arc<sync::Mutex<Inner>>,
     _descriptor: marker::PhantomData<D>,
@@ -34,7 +34,7 @@ struct Inner {
 #[derive(Debug)]
 pub struct OpenFuture<D> {
     open: oneshot::Receiver<()>,
-    rpc: Option<WebSocketRpc<D>>,
+    rpc: Option<WebSocketRpcClient<D>>,
 }
 
 /// A future that resolves into the result of an RPC call.
@@ -54,13 +54,13 @@ struct InnerWebSocketHandler {
     onmessage: collections::HashMap<uuid::Uuid, oneshot::Sender<bytes::Bytes>>,
 }
 
-impl<D> WebSocketRpc<D> {
+impl<D> WebSocketRpcClient<D> {
     /// Opens a new RPC link over the specified WebSocket URL.
     ///
     /// Note that this RPC link will try to keep the connection established; there is a re-connect
     /// policy that is used if the connection drops.
-    pub fn open(log: slog::Logger, url: &str) -> OpenFuture<D> {
-        let web_socket = ffi::WebSocket::new(url);
+    pub fn open(log: slog::Logger, url: String) -> OpenFuture<D> {
+        let web_socket = ffi::WebSocket::new(&url);
         let (onopen, open) = oneshot::channel();
 
         let inner = sync::Arc::new(sync::Mutex::new(InnerWebSocketHandler {
@@ -82,7 +82,7 @@ impl<D> WebSocketRpc<D> {
         }));
 
         let log = log.new(o!("component" => "web-socket-rpc"));
-        let rpc = Some(WebSocketRpc {
+        let rpc = Some(WebSocketRpcClient {
             log,
             inner,
             _descriptor: marker::PhantomData,
@@ -92,7 +92,7 @@ impl<D> WebSocketRpc<D> {
     }
 }
 
-impl<D> prost_simple_rpc::handler::Handler for WebSocketRpc<D>
+impl<D> prost_simple_rpc::handler::Handler for WebSocketRpcClient<D>
 where
     D: prost_simple_rpc::descriptor::ServiceDescriptor + Clone + Send + 'static,
 {
@@ -131,7 +131,7 @@ where
 }
 
 impl<D> futures::Future for OpenFuture<D> {
-    type Item = WebSocketRpc<D>;
+    type Item = WebSocketRpcClient<D>;
     type Error = error::Error;
 
     fn poll(&mut self) -> futures::Poll<Self::Item, Self::Error> {

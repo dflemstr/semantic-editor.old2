@@ -67,9 +67,7 @@ impl<'a> From<&'a syn::DeriveInput> for Attributes {
                             }
                         }
                     }
-                    Meta(syn::Meta::Word(ref ident)) if ident == "children" => {
-                        /* TODO */
-                    }
+                    Meta(syn::Meta::Word(ref ident)) if ident == "children" => { /* TODO */ }
                     _ => {}
                 }
             }

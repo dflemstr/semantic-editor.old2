@@ -18,7 +18,7 @@ pub mod ffi;
 
 /// An RPC connection over HTTP.
 #[derive(Clone, Debug)]
-pub struct HttpRpc<D> {
+pub struct HttpRpcClient<D> {
     log: slog::Logger,
     base_url: String,
     _descriptor: marker::PhantomData<D>,
@@ -39,11 +39,10 @@ pub struct CallFuture {
     rx: oneshot::Receiver<Result<bytes::Bytes, error::NestedError>>,
 }
 
-impl<D> HttpRpc<D> {
+impl<D> HttpRpcClient<D> {
     /// Create a new HTTP RPC instance.
-    pub fn new(log: slog::Logger, base_url: &str) -> Self {
-        let base_url = base_url.to_owned();
-        HttpRpc {
+    pub fn new(log: slog::Logger, base_url: String) -> Self {
+        HttpRpcClient {
             log,
             base_url,
             _descriptor: marker::PhantomData,
@@ -51,7 +50,7 @@ impl<D> HttpRpc<D> {
     }
 }
 
-impl<D> prost_simple_rpc::handler::Handler for HttpRpc<D>
+impl<D> prost_simple_rpc::handler::Handler for HttpRpcClient<D>
 where
     D: prost_simple_rpc::descriptor::ServiceDescriptor + Clone + Send + 'static,
 {
