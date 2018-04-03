@@ -29,7 +29,7 @@ uuid = "0.6.1"
 
 [dependencies.clippy]
 optional = true
-version = "0.0.188"
+version = "0.0.191"
 
 [dependencies.futures-await]
 branch = "0.1"
@@ -48,12 +48,12 @@ version = "2.2.3"
 
 [dependencies.wasm-bindgen]
 git = "https://github.com/alexcrichton/wasm-bindgen"
-rev = "25af16c7d9ffc8bd4f8f9ce16a12cce4b72b0dfe"
+rev = "e6a483f906fd249296ffe60c1b2898559d3408a2"
 
 [features]
 default = []
 journald = ["slog-journald"]
-lint = []
+lint = ["clippy"]
 standalone = []
 syslog = ["slog-syslog"]
 

@@ -10,6 +10,7 @@
 #![feature(proc_macro)]
 #![feature(wasm_import_module)]
 #![feature(wasm_custom_section)]
+// Blocked on https://github.com/rust-lang-nursery/rust-clippy/issues/2560
 // #![cfg_attr(feature = "lint", feature(plugin))]
 // #![cfg_attr(feature = "lint", plugin(clippy))]
 #![deny(missing_docs)]
