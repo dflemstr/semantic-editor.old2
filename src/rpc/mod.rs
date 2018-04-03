@@ -40,17 +40,17 @@ where
 impl<D> RpcClient<D> {
     /// Create a new HTTP RPC instance.
     #[async]
-    pub fn new(log: slog::Logger, base_url: String) -> error::Result<Self> {
-        if base_url.starts_with("http://") {
-            let inner = http::HttpRpcClient::new(log, base_url);
+    pub fn new(log: slog::Logger, url: String) -> error::Result<Self> {
+        if url.starts_with("http://") {
+            let inner = http::HttpRpcClient::new(log, url);
             Ok(RpcClient::Http(inner))
-        } else if base_url.starts_with("ws://") {
-            let inner = await!(websocket::WebSocketRpcClient::open(log, base_url))?;
+        } else if url.starts_with("ws://") {
+            let inner = await!(websocket::WebSocketRpcClient::open(log, url))?;
             Ok(RpcClient::WebSocket(inner))
         } else {
             Err(failure::err_msg(format!(
                 "Unsupported RPC transport scheme: {}",
-                base_url
+                url
             )))
         }
     }
@@ -67,7 +67,9 @@ where
     fn call(&self, method: D::Method, input: bytes::Bytes) -> Self::CallFuture {
         match *self {
             RpcClient::Http(ref client) => RpcClientCallFuture::Http(client.call(method, input)),
-            RpcClient::WebSocket(ref client) => RpcClientCallFuture::WebSocket(client.call(method, input)),
+            RpcClient::WebSocket(ref client) => {
+                RpcClientCallFuture::WebSocket(client.call(method, input))
+            }
         }
     }
 }

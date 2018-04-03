@@ -19,8 +19,7 @@ use version;
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct SemanticEditor {
-    client:
-        service::SemanticEditorClient<rpc::http::HttpRpcClient<service::SemanticEditorDescriptor>>,
+    client: service::SemanticEditorClient<rpc::RpcClient<service::SemanticEditorDescriptor>>,
 }
 
 #[wasm_bindgen]
@@ -57,12 +56,13 @@ impl SemanticEditor {
             );
         }));
 
-        let rpc = rpc::http::HttpRpcClient::new(log, &url);
-        let semantic_editor = SemanticEditor {
-            client: service::SemanticEditorClient::new(rpc),
-        };
+        let future = rpc::RpcClient::new(log, url.to_owned())
+            .map(|rpc| service::SemanticEditorClient::new(rpc))
+            .map(|client| SemanticEditor { client })
+            .map(|semantic_editor| resolveSemanticEditor(resolve, semantic_editor))
+            .map_err(|err| rejectSemanticEditor(reject, &err.to_string()));
 
-        resolveSemanticEditor(resolve, semantic_editor);
+        executor::run(future);
     }
 
     pub fn list_files(&self, path: &str, resolve: JsValue, reject: JsValue) {
