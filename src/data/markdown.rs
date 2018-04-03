@@ -7,6 +7,7 @@ use error;
 
 /// Houses all nodes.
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "document")]
 pub struct Markdown {
     /// Child elements.
     pub children: Vec<Block>,
@@ -16,6 +17,7 @@ pub struct Markdown {
 
 /// A union of all possible block elements.
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "union")]
 pub enum Block {
     /// The `Paragraph` variant.
     Paragraph(Paragraph),
@@ -41,6 +43,7 @@ pub enum Block {
 
 /// A union of all possible inline elements.
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "union")]
 pub enum Inline {
     /// The `Text` variant.
     Text(Text),
@@ -62,6 +65,7 @@ pub enum Inline {
 
 /// A union of all possible declaration elements.
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub enum Declaration {
     /// The `LinkReference` variant.
     LinkReference(LinkReference),
@@ -102,6 +106,7 @@ pub enum Declaration {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct Paragraph {
     /// Child elements.
     pub children: Vec<Block>,
@@ -136,6 +141,7 @@ pub struct Paragraph {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct Blockquote {
     /// Child elements.
     pub children: Vec<Block>,
@@ -170,6 +176,7 @@ pub struct Blockquote {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct Heading {
     /// The nesting depth of the heading (1-6).
     pub depth: u32,
@@ -205,6 +212,7 @@ pub struct Heading {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Code {
     /// The language that the code is written in.
     pub lang: String,
@@ -237,6 +245,7 @@ pub struct Code {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct InlineCode {
     /// The code contents.
     pub value: String,
@@ -273,6 +282,7 @@ pub struct InlineCode {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct Yaml {
     // TODO(dflemstr): insert YAML AST here
     /// The YAML contents.
@@ -302,6 +312,7 @@ pub struct Yaml {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Html {
     // TODO(dflemstr): insert HTML AST here
     /// The HTML contents.
@@ -355,6 +366,7 @@ pub struct Html {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct List {
     /// Whether the list is ordered (with numbers) or not.
     pub ordered: bool,
@@ -383,6 +395,7 @@ pub struct List {
 ///
 /// For an example, see the definition of [`List`](./struct.List.html).
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct ListItem {
     /// Whether this item can contain more than one block element.
     pub loose: bool,
@@ -393,7 +406,7 @@ pub struct ListItem {
 }
 
 /// The align type for a `Table`.
-#[derive(Clone, Copy, Debug, Semantic)]
+#[derive(Clone, Copy, Debug)]
 pub enum AlignType {
     /// Align to the left.
     Left,
@@ -479,6 +492,7 @@ pub enum AlignType {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct Table {
     /// The alignment of the table columns.
     pub align: Vec<AlignType>,
@@ -497,6 +511,7 @@ pub struct Table {
 ///
 /// For an example, see the definition of `Table`.
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct TableRow {
     /// Child elements.
     pub children: Vec<TableCell>,
@@ -512,6 +527,7 @@ pub struct TableRow {
 ///
 /// For an example, see the definition of [`Table`](./struct.Table.html).
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct TableCell {
     /// Child elements.
     pub children: Vec<Block>,
@@ -540,6 +556,7 @@ pub struct TableCell {
 /// }
 /// ```
 #[derive(Clone, Copy, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct ThematicBreak;
 
 /// Represents an explicit line break.
@@ -578,6 +595,7 @@ pub struct ThematicBreak;
 /// }
 /// ```
 #[derive(Clone, Copy, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Break;
 
 /// Represents slight emphasis.
@@ -622,6 +640,7 @@ pub struct Break;
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Emphasis {
     /// Child elements.
     pub children: Vec<Inline>,
@@ -669,6 +688,7 @@ pub struct Emphasis {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Strong {
     /// Child elements.
     pub children: Vec<Inline>,
@@ -700,6 +720,7 @@ pub struct Strong {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Delete {
     /// Child elements.
     pub children: Vec<Inline>,
@@ -735,6 +756,7 @@ pub struct Delete {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Link {
     /// The title of the link.
     pub title: Option<String>,
@@ -773,6 +795,7 @@ pub struct Link {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Image {
     /// The title of the image.
     pub title: Option<String>,
@@ -810,13 +833,14 @@ pub struct Image {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Footnote {
     /// Child elements.
     pub children: Vec<Inline>,
 }
 
 /// The reference type for a `LinkReference`.
-#[derive(Clone, Copy, Debug, Semantic)]
+#[derive(Clone, Copy, Debug)]
 pub enum ReferenceType {
     /// The reference is implicit, like `[foo]`.
     Shortcut,
@@ -867,6 +891,7 @@ pub enum ReferenceType {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct LinkReference {
     // TODO: use symbol
     /// The identifier/label that is the reference target.
@@ -909,6 +934,7 @@ pub struct LinkReference {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct ImageReference {
     // TODO: use symbol
     /// The identifier/label that is the reference target.
@@ -945,6 +971,7 @@ pub struct ImageReference {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct FootnoteReference {
     // TODO: use symbol
     /// The identifier/label that is the reference target.
@@ -981,6 +1008,7 @@ pub struct FootnoteReference {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct Definition {
     // TODO: use symbol
     /// The identifier/label of the definition.
@@ -1024,6 +1052,7 @@ pub struct Definition {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "block")]
 pub struct FootnoteDefinition {
     // TODO: use symbol
     /// The identifier/label that is the reference target.
@@ -1057,6 +1086,7 @@ pub struct FootnoteDefinition {
 /// }
 /// ```
 #[derive(Clone, Debug, Semantic)]
+#[semantic(kind = "inline")]
 pub struct Text {
     /// The text content.
     pub content: String,

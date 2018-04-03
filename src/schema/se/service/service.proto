@@ -2,24 +2,20 @@ syntax = "proto3";
 
 package se.service;
 
-import "se/action/action.proto";
+import "se/slate/schema.proto";
 
 // The core editor API from a frontend point of view.
 service SemanticEditor {
-  // Perform any user-originating action on the editor instance.
-  rpc PerformAction (ActionRequest) returns (ActionResponse);
-
+  rpc FetchSlateSchema (FetchSlateSchemaRequest) returns (FetchSlateSchemaResponse);
   rpc ListFiles (ListFilesRequest) returns (ListFilesResponse);
 }
 
-// A request to perform an action originating from the user.
-message ActionRequest {
-  se.action.Action action = 1;
+message FetchSlateSchemaRequest {
+  // Empty
 }
 
-// A response to an action request.
-message ActionResponse {
-
+message FetchSlateSchemaResponse {
+  se.slate.Schema schema = 1;
 }
 
 message ListFilesRequest {

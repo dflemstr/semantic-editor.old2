@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package se.slate;
+
+// This file is modeled according to this documentation.  It might contain some unidiomatic Protobuf
+// for that reason.
+// https://github.com/ianstormtaylor/slate/blob/master/docs/reference/slate/schema.md
+
+message Schema {
+  Rule document = 1;
+  map<string, Rule> blocks = 2;
+  map<string, Rule> inlines = 3;
+}
+
+message Rule {
+  map<string, Validation> data = 1;
+  Node first = 2;
+  bool is_void = 3;
+  Node last = 4;
+  repeated Node nodes = 5;
+  repeated string marks = 6;
+  Normalization normalize = 7;
+  Node parent = 8;
+  RegExp text = 9;
+}
+
+message Node {
+  repeated string types = 1;
+  repeated string objects = 2;
+  uint32 min = 3;
+  uint32 max = 4;
+}
+
+message Validation {
+  string js_code = 1;
+}
+
+message Normalization {
+  string js_code = 1;
+}
+
+message RegExp {
+  string raw = 1;
+}

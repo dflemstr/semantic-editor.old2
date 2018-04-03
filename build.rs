@@ -16,9 +16,8 @@ fn main() {
         .service_generator(Box::new(prost_simple_rpc_build::ServiceGenerator::new()))
         .compile_protos(
             &[
-                "src/schema/se/action/action.proto",
-                "src/schema/se/data/format.proto",
                 "src/schema/se/service/service.proto",
+                "src/schema/se/slate/schema.proto",
                 "src/schema/se/transport/transport.proto",
             ],
             &["src/schema"],

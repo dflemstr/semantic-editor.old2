@@ -19,13 +19,17 @@ impl SemanticEditor {
 
 impl service_proto::SemanticEditor for SemanticEditor {
     type Error = error::NestedError;
-    type PerformActionFuture =
-        Box<::futures::Future<Item = service_proto::ActionResponse, Error = Self::Error> + Send>;
+    type FetchSlateSchemaFuture = Box<
+        ::futures::Future<Item = service_proto::FetchSlateSchemaResponse, Error = Self::Error>
+            + Send,
+    >;
     type ListFilesFuture =
         Box<::futures::Future<Item = service_proto::ListFilesResponse, Error = Self::Error> + Send>;
 
-    fn perform_action(&self, input: service_proto::ActionRequest) -> Self::PerformActionFuture {
-        info!(self.log, "perform_action called");
+    fn fetch_slate_schema(
+        &self,
+        input: service_proto::FetchSlateSchemaRequest,
+    ) -> Self::FetchSlateSchemaFuture {
         unimplemented!()
     }
 
