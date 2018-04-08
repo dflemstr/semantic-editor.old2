@@ -1,3 +1,5 @@
+#![recursion_limit = "128"]
+
 extern crate proc_macro;
 extern crate proc_macro2;
 #[macro_use]
@@ -8,12 +10,14 @@ extern crate syn;
 #[derive(Debug, Default)]
 struct Attributes {
     kind: Option<semantic::Kind>,
+    role: Option<semantic::Role>,
 }
 
 #[derive(Debug, Default)]
 struct FieldAttributes {
-    is_children: bool,
+    name: String,
     cardinality: Option<semantic::Cardinality>,
+    is_children: bool,
 }
 
 #[proc_macro_derive(Semantic, attributes(semantic))]
@@ -25,55 +29,174 @@ pub fn semantic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
 fn impl_semantic(ast: &syn::DeriveInput) -> quote::Tokens {
     let name = &ast.ident;
-    let type_ = name.as_ref();
-    let attributes = Attributes::from(ast);
+    let name_str = name.as_ref();
+    let attributes = Attributes::from(ast.attrs.as_slice());
+    let field_attributes = field_attributes(ast);
 
     let kind = syn::Ident::from(format!(
         "{:?}",
         attributes
             .kind
-            .expect("missing kind attribute, like #[semantic(kind = \"...\")]")
+            .or_else(|| infer_kind(ast))
+            .expect("can't determine kind; annotate explicitly with #[semantic(kind = \"...\")]")
     ));
+
+    let role = syn::Ident::from(format!(
+        "{:?}",
+        attributes
+            .role
+            .expect("missing role attribute, like #[semantic(role = \"...\")]")
+    ));
+
+    let field_names = field_attributes.iter().map(|f| f.name.as_str()).collect::<Vec<_>>();
+    let field_is_childrens = field_attributes.iter().map(|f| f.is_children).collect::<Vec<_>>();
 
     quote! {
         extern crate semantic as _semantic;
-        impl _semantic::Semantic for #name {
-            fn type_() -> &'static str {
-                #type_
-            }
+        extern crate std as _std;
 
-            fn kind() -> _semantic::Kind {
-                _semantic::Kind::#kind
-            }
+        impl _semantic::Semantic for #name {
+            const CLASS: _semantic::Class<'static> = _semantic::Class {
+                name: #name_str,
+                id: _std::any::TypeId::of::<#name>(),
+                kind: _semantic::Kind::#kind,
+                role: _semantic::Role::#role,
+                fields: &[#(
+                    _semantic::Field {
+                        name: #field_names,
+                        is_children: #field_is_childrens,
+                    },
+                )*],
+            };
+
+            fn field(&self, _field: &str) {}
+
+            fn field_mut(&mut self, _field: &str) {}
+
+            fn variant(&self, _variant: &str) {}
+
+            fn variant_mut(&mut self, _variant: &str) {}
         }
     }
 }
 
-impl<'a> From<&'a syn::DeriveInput> for Attributes {
-    fn from(ast: &syn::DeriveInput) -> Self {
+fn field_attributes(ast: &syn::DeriveInput) -> Vec<FieldAttributes> {
+    match ast.data {
+        syn::Data::Struct(syn::DataStruct { ref fields, .. }) => struct_field_attributes(fields),
+        syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
+            enum_field_attributes(variants.iter().collect::<Vec<_>>().as_slice())
+        }
+        syn::Data::Union(_) => panic!("Deriving not supported for unions"),
+    }
+}
+
+fn struct_field_attributes(fields: &syn::Fields) -> Vec<FieldAttributes> {
+    build_field_attributes(fields.iter())
+}
+
+fn enum_field_attributes(variants: &[&syn::Variant]) -> Vec<FieldAttributes> {
+    // TODO
+    vec![]
+}
+
+fn build_field_attributes<'a, I>(fields: I) -> Vec<FieldAttributes>
+where
+    I: Iterator<Item = &'a syn::Field>,
+{
+    fields
+        .map(|f| {
+            let mut result = FieldAttributes::from(f.attrs.as_slice());
+            result.name = f.ident
+                .expect("unnamed fields not supported for #[semantic(kind = \"record\")]")
+                .as_ref()
+                .to_owned();
+            result
+        })
+        .collect()
+}
+
+impl<'a> From<&'a [syn::Attribute]> for Attributes {
+    fn from(attrs: &'a [syn::Attribute]) -> Self {
         use syn::NestedMeta::*;
 
-        let mut attributes = Attributes::default();
+        let mut result = Attributes::default();
 
-        for meta_items in ast.attrs.iter().filter_map(get_semantic_meta_items) {
+        for meta_items in attrs.iter().filter_map(get_semantic_meta_items) {
             for meta_item in meta_items {
                 match meta_item {
                     Meta(syn::Meta::NameValue(ref m)) if m.ident == "kind" => {
                         if let Ok(s) = get_lit_str(m.ident.as_ref(), m.ident.as_ref(), &m.lit) {
                             let value = s.value();
                             match value.parse() {
-                                Ok(kind) => attributes.kind = Some(kind),
+                                Ok(kind) => result.kind = Some(kind),
                                 Err(()) => panic!("invalid kind value {:?}", value),
                             }
                         }
                     }
-                    Meta(syn::Meta::Word(ref ident)) if ident == "children" => { /* TODO */ }
+                    Meta(syn::Meta::NameValue(ref m)) if m.ident == "role" => {
+                        if let Ok(s) = get_lit_str(m.ident.as_ref(), m.ident.as_ref(), &m.lit) {
+                            let value = s.value();
+                            match value.parse() {
+                                Ok(role) => result.role = Some(role),
+                                Err(()) => panic!("invalid role value {:?}", value),
+                            }
+                        }
+                    }
                     _ => {}
                 }
             }
         }
 
-        attributes
+        result
+    }
+}
+
+impl<'a> From<&'a [syn::Attribute]> for FieldAttributes {
+    fn from(attrs: &'a [syn::Attribute]) -> Self {
+        use syn::NestedMeta::*;
+
+        let mut result = FieldAttributes::default();
+
+        for meta_items in attrs.iter().filter_map(get_semantic_meta_items) {
+            for meta_item in meta_items {
+                match meta_item {
+                    Meta(syn::Meta::Word(ref ident)) if ident == "children" => {
+                        result.is_children = true
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        result
+    }
+}
+
+fn infer_kind(ast: &syn::DeriveInput) -> Option<semantic::Kind> {
+    match ast.data {
+        syn::Data::Struct(syn::DataStruct {
+            fields: syn::Fields::Unit,
+            ..
+        }) => Some(semantic::Kind::Unit),
+        syn::Data::Struct(syn::DataStruct {
+            fields: syn::Fields::Named(_),
+            ..
+        }) => Some(semantic::Kind::Record),
+        syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
+            if variants.iter().all(is_union_variant) {
+                Some(semantic::Kind::Union)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn is_union_variant(variant: &syn::Variant) -> bool {
+    match variant.fields {
+        syn::Fields::Unnamed(syn::FieldsUnnamed { ref unnamed, .. }) => unnamed.len() == 1,
+        _ => false,
     }
 }
 

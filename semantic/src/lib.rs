@@ -1,40 +1,79 @@
+use std::any;
+use std::fmt;
 use std::str;
 
-pub trait Semantic {
-    fn type_() -> &'static str;
+pub trait Semantic: any::Any + fmt::Debug {
+    const CLASS: Class<'static>;
 
-    fn kind() -> Kind;
+    #[inline]
+    fn class(&self) -> Class<'static> {
+        Self::CLASS
+    }
+    fn field(&self, field: &str);
+    fn field_mut(&mut self, field: &str);
+    fn variant(&self, variant: &str);
+    fn variant_mut(&mut self, variant: &str);
 }
 
-pub trait Field {
-    fn name() -> &'static str;
-    fn cardinality() -> Cardinality;
+#[derive(Debug)]
+pub struct Class<'a> {
+    pub name: &'a str,
+    pub id: any::TypeId,
+    pub kind: Kind,
+    pub role: Role,
+    pub fields: &'a [Field<'a>],
 }
-
-pub enum Data {}
 
 #[derive(Debug)]
 pub enum Kind {
-    Document,
-    Block,
-    Inline,
+    Unit,
+    Record,
     Union,
 }
 
 #[derive(Debug)]
-pub enum Cardinality {
-
+pub enum Role {
+    Document,
+    Block,
+    Inline,
 }
+
+#[derive(Debug)]
+pub struct Field<'a> {
+    pub name: &'a str,
+    pub is_children: bool,
+}
+
+#[derive(Debug)]
+pub enum Cardinality {
+    One,
+    Many,
+}
+
+#[derive(Debug)]
+pub struct Data {}
 
 impl str::FromStr for Kind {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "document" => Ok(Kind::Document),
-            "block" => Ok(Kind::Block),
-            "inline" => Ok(Kind::Inline),
+            "unit" => Ok(Kind::Unit),
+            "record" => Ok(Kind::Record),
             "union" => Ok(Kind::Union),
+            _ => Err(()),
+        }
+    }
+}
+
+impl str::FromStr for Role {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "document" => Ok(Role::Document),
+            "block" => Ok(Role::Block),
+            "inline" => Ok(Role::Inline),
             _ => Err(()),
         }
     }

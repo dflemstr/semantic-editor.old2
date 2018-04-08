@@ -5,6 +5,7 @@
 //!
 //! This program is in an early state of development!
 
+#![feature(const_type_id)]
 #![feature(generators)]
 #![feature(nll)]
 #![feature(proc_macro)]
