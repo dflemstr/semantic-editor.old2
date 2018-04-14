@@ -17,24 +17,20 @@ walkdir = "2.1.4"
 [dependencies]
 bytes = "0.4.6"
 failure = "0.1.1"
-futures = "0.1.18"
+futures = "0.2.0"
+futures-await = "0.1.1"
 prost = "0.3.2"
 prost-derive = "0.3.2"
 prost-simple-rpc = "0.2.1"
 pulldown-cmark = "0.1.2"
 slog-scope = "4.0.1"
 slog-stdlog = "3.0.2"
-tokio-executor = "0.1.1"
-uuid = "0.6.1"
+tokio-executor = "0.1.2"
+uuid = "0.6.2"
 
 [dependencies.clippy]
 optional = true
-version = "0.0.191"
-
-[dependencies.futures-await]
-branch = "0.1"
-git = "https://github.com/ngg/futures-await"
-version = "0.1"
+version = "0.0.193"
 
 [dependencies.semantic]
 path = "semantic"
@@ -43,12 +39,15 @@ path = "semantic"
 path = "semantic-derive"
 
 [dependencies.slog]
-features = ["max_level_trace", "release_max_level_trace"]
+features = [
+    "max_level_trace",
+    "release_max_level_trace",
+]
 version = "2.2.3"
 
 [dependencies.wasm-bindgen]
 git = "https://github.com/alexcrichton/wasm-bindgen"
-rev = "e6a483f906fd249296ffe60c1b2898559d3408a2"
+rev = "9976971e7e5461a657f605dee08d7fb93e48f0fd"
 
 [features]
 default = []
@@ -58,45 +57,33 @@ standalone = []
 syslog = ["slog-syslog"]
 
 [lib]
-crate-type = ["cdylib", "rlib"]
-
-[patch]
-
-[patch.crates-io]
-
+crate-type = [
+    "cdylib",
+    "rlib",
+]
 [patch.crates-io.prost]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
+git = "https://github.com/danburkert/prost.git"
 
 [patch.crates-io.prost-build]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
+git = "https://github.com/danburkert/prost.git"
 
 [patch.crates-io.prost-derive]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
+git = "https://github.com/danburkert/prost.git"
 
 [patch.crates-io.prost-types]
-branch = "nightly-proc-macro2"
-git = "https://github.com/ngg/prost.git"
-
+git = "https://github.com/danburkert/prost.git"
 [profile.release]
 lto = true
-
-[target]
-
-[target."cfg(not(target_arch = \"wasm32\"))"]
-
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
 brotli-decompressor = "1.2.1"
-hyper = "0.11.24"
+hyper = "0.11.25"
 lazy_static = "1.0.0"
 mime = "0.3.5"
-slog-async = "2.2.0"
+slog-async = "2.3.0"
 slog-json = "2.2.0"
-slog-term = "2.3.0"
-structopt = "0.2.6"
-tokio = "0.1.4"
+slog-term = "2.4.0"
+structopt = "0.2.7"
+tokio = "0.1.5"
 unicase = "2.1.0"
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies.slog-journald]
@@ -108,4 +95,7 @@ optional = true
 version = "0.11.0"
 
 [workspace]
-members = ["semantic", "semantic-derive"]
+members = [
+    "semantic",
+    "semantic-derive",
+]

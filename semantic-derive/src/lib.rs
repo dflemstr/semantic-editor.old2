@@ -52,17 +52,14 @@ fn impl_semantic(ast: &syn::DeriveInput) -> quote::Tokens {
     let field_is_childrens = field_attributes.iter().map(|f| f.is_children).collect::<Vec<_>>();
 
     quote! {
-        extern crate semantic as _semantic;
-        extern crate std as _std;
-
-        impl _semantic::Semantic for #name {
-            const CLASS: _semantic::Class<'static> = _semantic::Class {
+        impl ::semantic::Semantic for #name {
+            const CLASS: ::semantic::Class<'static> = ::semantic::Class {
                 name: #name_str,
-                id: _std::any::TypeId::of::<#name>(),
-                kind: _semantic::Kind::#kind,
-                role: _semantic::Role::#role,
+                id: ::std::any::TypeId::of::<#name>(),
+                kind: ::semantic::Kind::#kind,
+                role: ::semantic::Role::#role,
                 fields: &[#(
-                    _semantic::Field {
+                    ::semantic::Field {
                         name: #field_names,
                         is_children: #field_is_childrens,
                     },

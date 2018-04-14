@@ -3,6 +3,7 @@ pub mod uuid {
     //! FFI for browser APIs for generating UUIDs.
     #![allow(trivial_casts)]
     #![allow(unsafe_code)]
+    #![allow(missing_docs)]
     use wasm_bindgen::prelude::*;
 
     #[wasm_bindgen(module = "uuid")]
