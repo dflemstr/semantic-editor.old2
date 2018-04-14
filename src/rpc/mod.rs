@@ -12,9 +12,9 @@ use futures::prelude::{async, await};
 
 use error;
 
+pub mod ffi;
 pub mod http;
 pub mod websocket;
-pub mod ffi;
 
 /// A generic RPC client connection.
 #[derive(Clone, Debug)]

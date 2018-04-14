@@ -109,14 +109,14 @@
 mod scheduler;
 use self::scheduler::Scheduler;
 
-use tokio_executor::{self, Enter, SpawnError};
 use tokio_executor::park::{Park, ParkThread, Unpark};
+use tokio_executor::{self, Enter, SpawnError};
 
-use futures::{executor, Async, Future};
 use futures::future::{self, ExecuteError, ExecuteErrorKind, Executor};
+use futures::{executor, Async, Future};
 
-use std::fmt;
 use std::cell::Cell;
+use std::fmt;
 use std::marker::PhantomData;
 use std::rc::Rc;
 use std::time::{Duration, Instant};

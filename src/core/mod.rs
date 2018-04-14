@@ -2,6 +2,8 @@
 //!
 //! Responsible for running the infrastructure used by all of the editor front-ends.
 #![allow(unused_qualifications)]
+use std::any;
+use std::collections;
 
 use bytes;
 use failure;
@@ -28,11 +30,15 @@ mod standalone;
 lazy_static! {
     static ref REQUEST_CONTENT_TYPE: hyper::header::ContentType = {
         use std::str::FromStr;
-        hyper::header::ContentType(mime::Mime::from_str("application/x-semantic-editor-request").unwrap())
+        hyper::header::ContentType(
+            mime::Mime::from_str("application/x-semantic-editor-request").unwrap(),
+        )
     };
     static ref RESPONSE_CONTENT_TYPE: hyper::header::ContentType = {
         use std::str::FromStr;
-        hyper::header::ContentType(mime::Mime::from_str("application/x-semantic-editor-response").unwrap())
+        hyper::header::ContentType(
+            mime::Mime::from_str("application/x-semantic-editor-response").unwrap(),
+        )
     };
 }
 
@@ -46,7 +52,15 @@ struct HandlerHyperService<H> {
 ///
 /// This can be treated like a main function; it will parse command line arguments etc.
 pub fn run() -> error::Result<()> {
+    use semantic::Semantic;
+    use semantic::StaticSemantic;
     use structopt::StructOpt;
+
+    let mut classes = collections::HashMap::new();
+    ::data::Data::visit_classes(&mut |class| classes.insert(class.id.clone(), class).is_none());
+    for class in classes.into_iter() {
+        println!("{:?}", class);
+    }
 
     let options = options::Options::from_args();
 

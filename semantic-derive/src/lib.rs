@@ -7,39 +7,37 @@ extern crate quote;
 extern crate semantic;
 extern crate syn;
 
-#[derive(Debug, Default)]
 struct Attributes {
-    kind: Option<semantic::Kind>,
     role: Option<semantic::Role>,
 }
 
-#[derive(Debug, Default)]
 struct FieldAttributes {
-    name: String,
-    cardinality: Option<semantic::Cardinality>,
+    ident: syn::Ident,
+    ty: syn::Type,
     is_children: bool,
+}
+
+struct VariantAttributes {
+    ident: syn::Ident,
+    ty: syn::Type,
 }
 
 #[proc_macro_derive(Semantic, attributes(semantic))]
 pub fn semantic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse(input).unwrap();
-    let gen = impl_semantic(&ast);
+    let gen = impl_semantic(ast);
     gen.into()
 }
 
-fn impl_semantic(ast: &syn::DeriveInput) -> quote::Tokens {
+fn impl_semantic(ast: syn::DeriveInput) -> quote::Tokens {
     let name = &ast.ident;
-    let name_str = name.as_ref();
-    let attributes = Attributes::from(ast.attrs.as_slice());
-    let field_attributes = field_attributes(ast);
+    let mut attributes = Attributes::new();
+    attributes.set_from_attrs(ast.attrs.as_slice());
 
-    let kind = syn::Ident::from(format!(
-        "{:?}",
-        attributes
-            .kind
-            .or_else(|| infer_kind(ast))
-            .expect("can't determine kind; annotate explicitly with #[semantic(kind = \"...\")]")
-    ));
+    let InferredStructure {
+        structure,
+        visit_classes,
+    } = infer_structure(&ast).expect("can't infer semantic structure; is your type too complex?");
 
     let role = syn::Ident::from(format!(
         "{:?}",
@@ -48,23 +46,24 @@ fn impl_semantic(ast: &syn::DeriveInput) -> quote::Tokens {
             .expect("missing role attribute, like #[semantic(role = \"...\")]")
     ));
 
-    let field_names = field_attributes.iter().map(|f| f.name.as_str()).collect::<Vec<_>>();
-    let field_is_childrens = field_attributes.iter().map(|f| f.is_children).collect::<Vec<_>>();
-
     quote! {
-        impl ::semantic::Semantic for #name {
+        impl ::semantic::StaticSemantic for #name {
             const CLASS: ::semantic::Class<'static> = ::semantic::Class {
-                name: #name_str,
                 id: ::std::any::TypeId::of::<#name>(),
-                kind: ::semantic::Kind::#kind,
                 role: ::semantic::Role::#role,
-                fields: &[#(
-                    ::semantic::Field {
-                        name: #field_names,
-                        is_children: #field_is_childrens,
-                    },
-                )*],
+                structure: #structure,
             };
+
+            fn visit_classes<F>(visitor: &mut F) where F: FnMut(&'static ::semantic::Class<'static>) -> bool {
+                #visit_classes
+            }
+        }
+
+        impl ::semantic::Semantic for #name {
+            fn class(&self) -> ::semantic::Class<'static> {
+                use ::semantic::StaticSemantic;
+                Self::CLASS
+            }
 
             fn field(&self, _field: &str) {}
 
@@ -77,13 +76,94 @@ fn impl_semantic(ast: &syn::DeriveInput) -> quote::Tokens {
     }
 }
 
-fn field_attributes(ast: &syn::DeriveInput) -> Vec<FieldAttributes> {
+struct InferredStructure {
+    structure: quote::Tokens,
+    visit_classes: quote::Tokens,
+}
+
+fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
+    let name = ast.ident.as_ref();
     match ast.data {
-        syn::Data::Struct(syn::DataStruct { ref fields, .. }) => struct_field_attributes(fields),
-        syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
-            enum_field_attributes(variants.iter().collect::<Vec<_>>().as_slice())
+        syn::Data::Struct(syn::DataStruct {
+            fields: syn::Fields::Unit,
+            ..
+        }) => Some(InferredStructure {
+            structure: quote!(::semantic::Structure::Unit {
+                name: concat!(module_path!(), "::", #name),
+            }),
+            visit_classes: quote!(),
+        }),
+        syn::Data::Struct(syn::DataStruct { ref fields, .. }) => {
+            let field_attributes = struct_field_attributes(fields);
+            let field_names = field_attributes.iter().map(|f| f.ident.as_ref());
+            let field_types1 = field_attributes.iter().map(|f| &f.ty);
+            let field_types2 = field_attributes.iter().map(|f| &f.ty);
+            let field_types3 = field_attributes.iter().map(|f| &f.ty);
+            let field_is_childrens = field_attributes.iter().map(|f| f.is_children);
+
+            Some(InferredStructure {
+                structure: quote! {
+                    ::semantic::Structure::Record {
+                        name: concat!(module_path!(), "::", #name),
+                        fields: &[#(
+                            ::semantic::Field {
+                                name: #field_names,
+                                ty: ::std::any::TypeId::of::<#field_types1>(),
+                                is_children: #field_is_childrens,
+                            },
+                        )*]
+                    }
+                },
+                visit_classes: quote! {
+                    #(
+                        if visitor(&<#field_types2 as ::semantic::StaticSemantic>::CLASS) {
+                            <#field_types3 as ::semantic::StaticSemantic>::visit_classes(visitor);
+                        }
+                    )*
+                },
+            })
         }
-        syn::Data::Union(_) => panic!("Deriving not supported for unions"),
+        syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
+            if variants.iter().all(is_union_variant) {
+                let variant_attributes = enum_union_variant_attributes(variants.iter());
+                let variant_names = variant_attributes.iter().map(|f| f.ident.as_ref());
+                let variant_types1 = variant_attributes.iter().map(|f| &f.ty);
+                let variant_types2 = variant_attributes.iter().map(|f| &f.ty);
+                let variant_types3 = variant_attributes.iter().map(|f| &f.ty);
+
+                Some(InferredStructure {
+                    structure: quote! {
+                        ::semantic::Structure::Union {
+                            variants: &[#(
+                                ::semantic::Variant {
+                                    name: #variant_names,
+                                    ty: ::std::any::TypeId::of::<#variant_types1>(),
+                                },
+                            )*],
+                        }
+                    },
+                    visit_classes: quote! {
+                        #(
+                            if visitor(&#variant_types2::CLASS) {
+                                #variant_types3::visit_classes(visitor);
+                            }
+                        )*
+                    },
+                })
+            } else if variants.iter().all(is_enumeration_variant) {
+                Some(InferredStructure {
+                    structure: quote! {
+                        ::semantic::Structure::Enumeration {
+                            variants: &[],
+                        }
+                    },
+                    visit_classes: quote!(),
+                })
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }
 
@@ -91,50 +171,55 @@ fn struct_field_attributes(fields: &syn::Fields) -> Vec<FieldAttributes> {
     build_field_attributes(fields.iter())
 }
 
-fn enum_field_attributes(variants: &[&syn::Variant]) -> Vec<FieldAttributes> {
-    // TODO
-    vec![]
-}
-
 fn build_field_attributes<'a, I>(fields: I) -> Vec<FieldAttributes>
 where
     I: Iterator<Item = &'a syn::Field>,
 {
     fields
+        .filter(|f| f.ident.is_some())
         .map(|f| {
-            let mut result = FieldAttributes::from(f.attrs.as_slice());
-            result.name = f.ident
-                .expect("unnamed fields not supported for #[semantic(kind = \"record\")]")
-                .as_ref()
-                .to_owned();
+            let mut result = FieldAttributes::new(f.ident.unwrap().clone(), f.ty.clone());
+            result.set_from_attrs(f.attrs.as_slice());
             result
         })
         .collect()
 }
 
-impl<'a> From<&'a [syn::Attribute]> for Attributes {
-    fn from(attrs: &'a [syn::Attribute]) -> Self {
-        use syn::NestedMeta::*;
+fn enum_union_variant_attributes<'a, I>(variants: I) -> Vec<VariantAttributes>
+where
+    I: Iterator<Item = &'a syn::Variant>,
+{
+    variants
+        .map(|v| VariantAttributes {
+            ident: v.ident,
+            ty: match v.fields {
+                syn::Fields::Unnamed(syn::FieldsUnnamed { ref unnamed, .. }) => {
+                    // We have already established that this is an union enum, so this should be
+                    // safe
+                    unnamed.iter().next().unwrap().ty.clone()
+                }
+                _ => unreachable!(),
+            },
+        })
+        .collect()
+}
 
-        let mut result = Attributes::default();
+impl Attributes {
+    fn new() -> Attributes {
+        Attributes { role: None }
+    }
+
+    fn set_from_attrs(&mut self, attrs: &[syn::Attribute]) {
+        use syn::NestedMeta::*;
 
         for meta_items in attrs.iter().filter_map(get_semantic_meta_items) {
             for meta_item in meta_items {
                 match meta_item {
-                    Meta(syn::Meta::NameValue(ref m)) if m.ident == "kind" => {
-                        if let Ok(s) = get_lit_str(m.ident.as_ref(), m.ident.as_ref(), &m.lit) {
-                            let value = s.value();
-                            match value.parse() {
-                                Ok(kind) => result.kind = Some(kind),
-                                Err(()) => panic!("invalid kind value {:?}", value),
-                            }
-                        }
-                    }
                     Meta(syn::Meta::NameValue(ref m)) if m.ident == "role" => {
                         if let Ok(s) = get_lit_str(m.ident.as_ref(), m.ident.as_ref(), &m.lit) {
                             let value = s.value();
                             match value.parse() {
-                                Ok(role) => result.role = Some(role),
+                                Ok(role) => self.role = Some(role),
                                 Err(()) => panic!("invalid role value {:?}", value),
                             }
                         }
@@ -143,50 +228,39 @@ impl<'a> From<&'a [syn::Attribute]> for Attributes {
                 }
             }
         }
-
-        result
     }
 }
 
-impl<'a> From<&'a [syn::Attribute]> for FieldAttributes {
-    fn from(attrs: &'a [syn::Attribute]) -> Self {
-        use syn::NestedMeta::*;
+impl FieldAttributes {
+    fn new(ident: syn::Ident, ty: syn::Type) -> FieldAttributes {
+        let is_children = false;
+        FieldAttributes {
+            ident,
+            ty,
+            is_children,
+        }
+    }
 
-        let mut result = FieldAttributes::default();
+    fn set_from_attrs(&mut self, attrs: &[syn::Attribute]) {
+        use syn::NestedMeta::*;
 
         for meta_items in attrs.iter().filter_map(get_semantic_meta_items) {
             for meta_item in meta_items {
                 match meta_item {
                     Meta(syn::Meta::Word(ref ident)) if ident == "children" => {
-                        result.is_children = true
+                        self.is_children = true
                     }
                     _ => {}
                 }
             }
         }
-
-        result
     }
 }
 
-fn infer_kind(ast: &syn::DeriveInput) -> Option<semantic::Kind> {
-    match ast.data {
-        syn::Data::Struct(syn::DataStruct {
-            fields: syn::Fields::Unit,
-            ..
-        }) => Some(semantic::Kind::Unit),
-        syn::Data::Struct(syn::DataStruct {
-            fields: syn::Fields::Named(_),
-            ..
-        }) => Some(semantic::Kind::Record),
-        syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
-            if variants.iter().all(is_union_variant) {
-                Some(semantic::Kind::Union)
-            } else {
-                None
-            }
-        }
-        _ => None,
+fn is_enumeration_variant(variant: &syn::Variant) -> bool {
+    match variant.fields {
+        syn::Fields::Unit => true,
+        _ => false,
     }
 }
 

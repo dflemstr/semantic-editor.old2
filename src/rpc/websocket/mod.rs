@@ -1,18 +1,18 @@
 //! An RPC implementation using WebSocket framing.
 
 use bytes;
+use error;
 use failure;
 use futures;
 use futures::sync::oneshot;
 use prost;
 use prost_simple_rpc;
+use schema::se::transport as transport_proto;
 use slog;
-use uuid;
 use std::collections;
 use std::marker;
 use std::sync;
-use schema::se::transport as transport_proto;
-use error;
+use uuid;
 
 pub mod ffi;
 

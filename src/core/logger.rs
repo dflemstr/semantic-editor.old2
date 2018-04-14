@@ -4,11 +4,11 @@ use slog;
 use slog_async;
 #[cfg(feature = "journald")]
 use slog_journald;
-use slog_term;
 use slog_scope;
 use slog_stdlog;
 #[cfg(feature = "syslog")]
 use slog_syslog;
+use slog_term;
 
 pub fn init(options: &super::options::Options) -> slog::Logger {
     use slog::Drain;

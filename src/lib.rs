@@ -73,8 +73,8 @@ pub mod data;
 pub mod error;
 pub mod executor;
 pub mod logger;
-pub mod schema;
 pub mod rpc;
+pub mod schema;
 mod version;
 #[cfg(target_arch = "wasm32")]
 pub mod wasm_api;

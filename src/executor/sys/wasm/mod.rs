@@ -7,8 +7,8 @@ use std::time;
 use futures;
 use tokio_executor;
 
-pub mod ffi;
 mod current_thread;
+pub mod ffi;
 
 /// Runs a future to completion by instantiating a microtask-based executor.  This leverages the
 /// browser's event queue to poll futures to completion.

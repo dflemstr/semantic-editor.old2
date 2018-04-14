@@ -4,22 +4,22 @@
 #![allow(missing_copy_implementations)]
 
 use super::Borrow;
-use tokio_executor::Enter;
 use tokio_executor::park::Unpark;
+use tokio_executor::Enter;
 
-use futures::{Async, Future};
 use futures::executor::{self, NotifyHandle, Spawn, UnsafeNotify};
+use futures::{Async, Future};
 
 use std::cell::UnsafeCell;
 use std::fmt::{self, Debug};
+use std::marker::PhantomData;
 use std::mem;
 use std::ptr;
 use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release, SeqCst};
 use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicUsize};
 use std::sync::{Arc, Weak};
-use std::usize;
 use std::thread;
-use std::marker::PhantomData;
+use std::usize;
 
 /// A generic task-aware scheduler.
 ///

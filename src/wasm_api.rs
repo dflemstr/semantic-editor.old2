@@ -10,8 +10,8 @@ use slog_scope;
 use slog_stdlog;
 use wasm_bindgen::prelude::*;
 
-use logger;
 use executor;
+use logger;
 use rpc;
 use schema::se::service;
 use version;

@@ -1,9 +1,9 @@
 //! The Markdown format, using the [CommonMark](http://commonmark.org/) standard.
 //!
 //! Mostly taken from <https://github.com/syntax-tree/mdast>.
-use std::io;
-use pulldown_cmark;
 use error;
+use pulldown_cmark;
+use std::io;
 
 /// Houses all nodes.
 #[derive(Clone, Debug, Semantic)]
@@ -412,7 +412,8 @@ pub struct ListItem {
 }
 
 /// The align type for a `Table`.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Semantic)]
+#[semantic(role = "attribute")]
 pub enum AlignType {
     /// Align to the left.
     Left,
@@ -854,7 +855,8 @@ pub struct Footnote {
 }
 
 /// The reference type for a `LinkReference`.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Semantic)]
+#[semantic(role = "attribute")]
 pub enum ReferenceType {
     /// The reference is implicit, like `[foo]`.
     Shortcut,
