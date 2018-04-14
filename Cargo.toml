@@ -80,6 +80,9 @@ git = "https://github.com/ngg/prost.git"
 branch = "nightly-proc-macro2"
 git = "https://github.com/ngg/prost.git"
 
+[profile.release]
+lto = true
+
 [target]
 
 [target."cfg(not(target_arch = \"wasm32\"))"]
