@@ -1,15 +1,2 @@
 #!/bin/sh -eu
-main=src/wasm/semantic_editor.js
-
 RUST_BACKTRACE=1 wasm-bindgen target/wasm32-unknown-unknown/release/semantic_editor.wasm --typescript --out-dir src/wasm
-
-awk '
-  BEGIN {print "/*ignore jslint start*/"}
-  /new TextDecoder/ {gsub("new TextDecoder", "new window.TextDecoder")}
-  /new TextEncoder/ {gsub("new TextEncoder", "new window.TextEncoder")}
-  /var TextEncoder = / {gsub("var TextEncoder = .*", "{}")}
-  /var TextDecoder = / {gsub("var TextDecoder = .*", "{}")}
-  END {print "/*ignore jslint end*/"}
-  {print}
-' "$main" > "$main.new"
-mv "$main.new" "$main"
