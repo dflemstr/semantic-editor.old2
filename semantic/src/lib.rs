@@ -1,23 +1,23 @@
 #![feature(const_type_id)]
+extern crate type_info;
 
 use std::any;
 use std::fmt;
 use std::str;
 
-pub trait StaticSemantic: Semantic {
+pub trait Semantic: DynamicSemantic {
     const CLASS: Class<'static>;
-    fn visit_classes<F>(visitor: &mut F)
+
+    fn visit_classes<F>(_visitor: &mut F)
     where
-        F: FnMut(&'static Class<'static>) -> bool;
+        F: FnMut(&'static Class<'static>) -> bool,
+    {
+    }
 }
 
-pub trait Semantic: any::Any + fmt::Debug {
+pub trait DynamicSemantic: any::Any + fmt::Debug {
     #[inline]
     fn class(&self) -> Class<'static>;
-    fn field(&self, field: &str);
-    fn field_mut(&mut self, field: &str);
-    fn variant(&self, variant: &str);
-    fn variant_mut(&mut self, variant: &str);
 }
 
 #[derive(Debug)]
@@ -90,39 +90,17 @@ impl str::FromStr for Role {
 
 macro_rules! semantic_primitive {
     ($t:ty) => {
-        impl StaticSemantic for $t {
+        impl Semantic for $t {
             const CLASS: Class<'static> = Class {
                 id: any::TypeId::of::<$t>(),
                 role: Role::Attribute,
                 structure: Structure::Primitive,
             };
-
-            fn visit_classes<F>(_visitor: &mut F)
-            where
-                F: FnMut(&'static Class<'static>) -> bool,
-            {
-            }
         }
 
-        impl Semantic for $t {
+        impl DynamicSemantic for $t {
             fn class(&self) -> Class<'static> {
                 Self::CLASS
-            }
-
-            fn field(&self, field: &str) {
-                unimplemented!()
-            }
-
-            fn field_mut(&mut self, field: &str) {
-                unimplemented!()
-            }
-
-            fn variant(&self, variant: &str) {
-                unimplemented!()
-            }
-
-            fn variant_mut(&mut self, variant: &str) {
-                unimplemented!()
             }
         }
     };
@@ -142,9 +120,9 @@ semantic_primitive!(f64);
 // Not implemented for usize, isize intentionally, since they are not cross-platform
 semantic_primitive!(String);
 
-impl<A> StaticSemantic for Vec<A>
+impl<A> Semantic for Vec<A>
 where
-    A: StaticSemantic,
+    A: Semantic,
 {
     const CLASS: Class<'static> = Class {
         id: any::TypeId::of::<Vec<A>>(),
@@ -162,72 +140,40 @@ where
     }
 }
 
-impl<A> Semantic for Vec<A>
+impl<A> DynamicSemantic for Vec<A>
 where
-    A: StaticSemantic,
+    A: Semantic,
 {
     fn class(&self) -> Class<'static> {
         Self::CLASS
-    }
-
-    fn field(&self, field: &str) {
-        unimplemented!()
-    }
-
-    fn field_mut(&mut self, field: &str) {
-        unimplemented!()
-    }
-
-    fn variant(&self, variant: &str) {
-        unimplemented!()
-    }
-
-    fn variant_mut(&mut self, variant: &str) {
-        unimplemented!()
-    }
-}
-
-impl<A> StaticSemantic for Option<A>
-where
-    A: StaticSemantic,
-{
-    const CLASS: Class<'static> = Class {
-        id: any::TypeId::of::<Vec<A>>(),
-        role: A::CLASS.role,
-        structure: Structure::Collection { item: &A::CLASS },
-    };
-
-    fn visit_classes<F>(visitor: &mut F)
-    where
-        F: FnMut(&'static Class<'static>) -> bool,
-    {
-        if visitor(&A::CLASS) {
-            A::visit_classes(visitor);
-        }
     }
 }
 
 impl<A> Semantic for Option<A>
 where
-    A: StaticSemantic,
+    A: Semantic,
+{
+    const CLASS: Class<'static> = Class {
+        id: any::TypeId::of::<Vec<A>>(),
+        role: A::CLASS.role,
+        structure: Structure::Collection { item: &A::CLASS },
+    };
+
+    fn visit_classes<F>(visitor: &mut F)
+    where
+        F: FnMut(&'static Class<'static>) -> bool,
+    {
+        if visitor(&A::CLASS) {
+            A::visit_classes(visitor);
+        }
+    }
+}
+
+impl<A> DynamicSemantic for Option<A>
+where
+    A: Semantic,
 {
     fn class(&self) -> Class<'static> {
         Self::CLASS
-    }
-
-    fn field(&self, field: &str) {
-        unimplemented!()
-    }
-
-    fn field_mut(&mut self, field: &str) {
-        unimplemented!()
-    }
-
-    fn variant(&self, variant: &str) {
-        unimplemented!()
-    }
-
-    fn variant_mut(&mut self, variant: &str) {
-        unimplemented!()
     }
 }

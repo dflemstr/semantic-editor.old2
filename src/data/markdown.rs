@@ -6,7 +6,7 @@ use pulldown_cmark;
 use std::io;
 
 /// Houses all nodes.
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "document")]
 pub struct Markdown {
     /// Child elements.
@@ -17,7 +17,7 @@ pub struct Markdown {
 }
 
 /// A union of all possible block elements.
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub enum Block {
     /// The `Paragraph` variant.
@@ -43,7 +43,7 @@ pub enum Block {
 }
 
 /// A union of all possible inline elements.
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub enum Inline {
     /// The `Text` variant.
@@ -65,7 +65,7 @@ pub enum Inline {
 }
 
 /// A union of all possible declaration elements.
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub enum Declaration {
     /// The `LinkReference` variant.
@@ -106,7 +106,7 @@ pub enum Declaration {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct Paragraph {
     /// Child elements.
@@ -142,7 +142,7 @@ pub struct Paragraph {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct Blockquote {
     /// Child elements.
@@ -178,7 +178,7 @@ pub struct Blockquote {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct Heading {
     /// The nesting depth of the heading (1-6).
@@ -215,7 +215,7 @@ pub struct Heading {
 ///   "value": "foo()"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Code {
     /// The language that the code is written in.
@@ -248,7 +248,7 @@ pub struct Code {
 ///   "value": "foo()"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct InlineCode {
     /// The code contents.
@@ -285,7 +285,7 @@ pub struct InlineCode {
 ///   "value": "foo: bar"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct Yaml {
     // TODO(dflemstr): insert YAML AST here
@@ -315,7 +315,7 @@ pub struct Yaml {
 ///   "value": "<div>"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Html {
     // TODO(dflemstr): insert HTML AST here
@@ -369,7 +369,7 @@ pub struct Html {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct List {
     /// Whether the list is ordered (with numbers) or not.
@@ -399,7 +399,7 @@ pub struct List {
 /// ```
 ///
 /// For an example, see the definition of [`List`](./struct.List.html).
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct ListItem {
     /// Whether this item can contain more than one block element.
@@ -412,7 +412,7 @@ pub struct ListItem {
 }
 
 /// The align type for a `Table`.
-#[derive(Clone, Copy, Debug, Semantic)]
+#[derive(Clone, Copy, Debug, Semantic, TypeInfo)]
 #[semantic(role = "attribute")]
 pub enum AlignType {
     /// Align to the left.
@@ -498,7 +498,7 @@ pub enum AlignType {
 ///   ]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct Table {
     /// The alignment of the table columns.
@@ -518,7 +518,7 @@ pub struct Table {
 /// ```
 ///
 /// For an example, see the definition of `Table`.
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct TableRow {
     /// Child elements.
@@ -535,7 +535,7 @@ pub struct TableRow {
 /// ```
 ///
 /// For an example, see the definition of [`Table`](./struct.Table.html).
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct TableCell {
     /// Child elements.
@@ -565,7 +565,7 @@ pub struct TableCell {
 ///   "type": "thematicBreak"
 /// }
 /// ```
-#[derive(Clone, Copy, Debug, Semantic)]
+#[derive(Clone, Copy, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct ThematicBreak;
 
@@ -604,7 +604,7 @@ pub struct ThematicBreak;
 ///   ]
 /// }
 /// ```
-#[derive(Clone, Copy, Debug, Semantic)]
+#[derive(Clone, Copy, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Break;
 
@@ -649,7 +649,7 @@ pub struct Break;
 ///   ]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Emphasis {
     /// Child elements.
@@ -698,7 +698,7 @@ pub struct Emphasis {
 ///   ]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Strong {
     /// Child elements.
@@ -731,7 +731,7 @@ pub struct Strong {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Delete {
     /// Child elements.
@@ -768,7 +768,7 @@ pub struct Delete {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Link {
     /// The title of the link.
@@ -808,7 +808,7 @@ pub struct Link {
 ///   "alt": "alpha"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Image {
     /// The title of the image.
@@ -846,7 +846,7 @@ pub struct Image {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Footnote {
     /// Child elements.
@@ -855,7 +855,7 @@ pub struct Footnote {
 }
 
 /// The reference type for a `LinkReference`.
-#[derive(Clone, Copy, Debug, Semantic)]
+#[derive(Clone, Copy, Debug, Semantic, TypeInfo)]
 #[semantic(role = "attribute")]
 pub enum ReferenceType {
     /// The reference is implicit, like `[foo]`.
@@ -906,7 +906,7 @@ pub enum ReferenceType {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct LinkReference {
     // TODO: use symbol
@@ -949,7 +949,7 @@ pub struct LinkReference {
 ///   "alt": "alpha"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct ImageReference {
     // TODO: use symbol
@@ -986,7 +986,7 @@ pub struct ImageReference {
 ///   "identifier": "alpha"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct FootnoteReference {
     // TODO: use symbol
@@ -1023,7 +1023,7 @@ pub struct FootnoteReference {
 ///   "url": "http://example.com"
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct Definition {
     // TODO: use symbol
@@ -1067,7 +1067,7 @@ pub struct Definition {
 ///   }]
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "block")]
 pub struct FootnoteDefinition {
     // TODO: use symbol
@@ -1102,7 +1102,7 @@ pub struct FootnoteDefinition {
 ///   "value": "Alpha bravo charlie."
 /// }
 /// ```
-#[derive(Clone, Debug, Semantic)]
+#[derive(Clone, Debug, Semantic, TypeInfo)]
 #[semantic(role = "inline")]
 pub struct Text {
     /// The text content.

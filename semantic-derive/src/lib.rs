@@ -39,6 +39,16 @@ fn impl_semantic(ast: syn::DeriveInput) -> quote::Tokens {
         visit_classes,
     } = infer_structure(&ast).expect("can't infer semantic structure; is your type too complex?");
 
+    let visit_classes = visit_classes
+        .map(|v| {
+            quote! {
+                fn visit_classes<F>(visitor: &mut F) where F: FnMut(&'static ::semantic::Class<'static>) -> bool {
+                    #v
+                }
+            }
+        })
+        .unwrap_or(quote!());
+
     let role = syn::Ident::from(format!(
         "{:?}",
         attributes
@@ -47,38 +57,27 @@ fn impl_semantic(ast: syn::DeriveInput) -> quote::Tokens {
     ));
 
     quote! {
-        impl ::semantic::StaticSemantic for #name {
+        impl ::semantic::Semantic for #name {
             const CLASS: ::semantic::Class<'static> = ::semantic::Class {
-                id: ::std::any::TypeId::of::<#name>(),
+                id: <Self as ::type_info::TypeInfo>::TYPE.id,
                 role: ::semantic::Role::#role,
                 structure: #structure,
             };
 
-            fn visit_classes<F>(visitor: &mut F) where F: FnMut(&'static ::semantic::Class<'static>) -> bool {
-                #visit_classes
-            }
+            #visit_classes
         }
 
-        impl ::semantic::Semantic for #name {
+        impl ::semantic::DynamicSemantic for #name {
             fn class(&self) -> ::semantic::Class<'static> {
-                use ::semantic::StaticSemantic;
-                Self::CLASS
+                <Self as ::semantic::Semantic>::CLASS
             }
-
-            fn field(&self, _field: &str) {}
-
-            fn field_mut(&mut self, _field: &str) {}
-
-            fn variant(&self, _variant: &str) {}
-
-            fn variant_mut(&mut self, _variant: &str) {}
         }
     }
 }
 
 struct InferredStructure {
     structure: quote::Tokens,
-    visit_classes: quote::Tokens,
+    visit_classes: Option<quote::Tokens>,
 }
 
 fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
@@ -91,7 +90,7 @@ fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
             structure: quote!(::semantic::Structure::Unit {
                 name: concat!(module_path!(), "::", #name),
             }),
-            visit_classes: quote!(),
+            visit_classes: None,
         }),
         syn::Data::Struct(syn::DataStruct { ref fields, .. }) => {
             let field_attributes = struct_field_attributes(fields);
@@ -114,13 +113,13 @@ fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
                         )*]
                     }
                 },
-                visit_classes: quote! {
+                visit_classes: Some(quote! {
                     #(
-                        if visitor(&<#field_types2 as ::semantic::StaticSemantic>::CLASS) {
-                            <#field_types3 as ::semantic::StaticSemantic>::visit_classes(visitor);
+                        if visitor(&<#field_types2 as ::semantic::Semantic>::CLASS) {
+                            <#field_types3 as ::semantic::Semantic>::visit_classes(visitor);
                         }
                     )*
-                },
+                }),
             })
         }
         syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
@@ -142,13 +141,13 @@ fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
                             )*],
                         }
                     },
-                    visit_classes: quote! {
+                    visit_classes: Some(quote! {
                         #(
                             if visitor(&#variant_types2::CLASS) {
                                 #variant_types3::visit_classes(visitor);
                             }
                         )*
-                    },
+                    }),
                 })
             } else if variants.iter().all(is_enumeration_variant) {
                 Some(InferredStructure {
@@ -157,7 +156,7 @@ fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
                             variants: &[],
                         }
                     },
-                    visit_classes: quote!(),
+                    visit_classes: None,
                 })
             } else {
                 None

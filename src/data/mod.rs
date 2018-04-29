@@ -4,7 +4,7 @@
 pub mod markdown;
 
 /// Some data that can be edited.
-#[derive(Debug, Semantic)]
+#[derive(Debug, Semantic, TypeInfo)]
 #[semantic(role = "root")]
 pub enum Data {
     /// The `Markdown` variant.

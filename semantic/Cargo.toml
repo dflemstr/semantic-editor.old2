@@ -5,3 +5,4 @@ authors = ["David Flemström <david.flemstrom@gmail.com>"]
 publish = false
 
 [dependencies]
+type-info = "0.2.1"

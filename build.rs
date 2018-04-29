@@ -44,7 +44,7 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
 
     writeln!(
         data_rs_file,
-        "const FILES: &'static [(&'static str, &'static [u8])] = &["
+        "const FILES: &'static [(&'static str, &'static [u8], u64)] = &["
     )?;
 
     for entry in walkdir::WalkDir::new(build_dir) {
@@ -62,12 +62,12 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
         } else if relative_path.extension() != Some(ffi::OsStr::new("map")) {
             let compressed_path = with_brotli_extension(&out_path);
             let in_metadata = in_path.metadata()?;
+            let in_size = in_metadata.len();
 
             if !compressed_path.exists()
                 || compressed_path.metadata()?.modified()? < in_metadata.modified()?
             {
                 let mut in_file = fs::File::open(&in_path)?;
-                let in_size = in_metadata.len();
                 let mut compressed_file = fs::File::create(&compressed_path)?;
 
                 brotli::BrotliCompress(
@@ -91,9 +91,10 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
             );
 
             writeln!(data_rs_file,
-            r#"    ({relative_path:?}, include_bytes!(concat!(env!("OUT_DIR"), {data_path:?}))),"#,
+            r#"    ({relative_path:?}, include_bytes!(concat!(env!("OUT_DIR"), {data_path:?})), {size}),"#,
             relative_path = relative_path,
-            data_path = path::Path::new("/standalone").join(with_brotli_extension(&relative_path)))?
+            data_path = path::Path::new("/standalone").join(with_brotli_extension(&relative_path)),
+            size = in_size)?
         }
     }
     writeln!(data_rs_file, "];")?;

@@ -62,6 +62,9 @@ extern crate structopt;
 #[cfg(not(target_arch = "wasm32"))]
 extern crate tokio;
 extern crate tokio_executor;
+extern crate type_info;
+#[macro_use]
+extern crate type_info_derive;
 #[cfg(not(target_arch = "wasm32"))]
 extern crate unicase;
 extern crate uuid;

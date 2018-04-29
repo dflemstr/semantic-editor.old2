@@ -28,7 +28,7 @@ impl service_proto::SemanticEditor for SemanticEditor {
 
     fn fetch_slate_schema(
         &self,
-        input: service_proto::FetchSlateSchemaRequest,
+        _input: service_proto::FetchSlateSchemaRequest,
     ) -> Self::FetchSlateSchemaFuture {
         unimplemented!()
     }
