@@ -39,7 +39,7 @@ impl fmt::Debug for WebSocket {
     }
 }
 
-#[wasm_bindgen(module = "../rpc/websocket/ffi")]
+#[wasm_bindgen(module = "./../rpc/websocket/ffi")]
 extern "C" {
     #[allow(non_snake_case)]
     pub fn setWebSocketHandler(websocket: &WebSocket, handler: WebSocketHandler);

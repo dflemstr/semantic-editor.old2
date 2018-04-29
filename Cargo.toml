@@ -5,7 +5,7 @@ publish = false
 version = "0.1.0"
 
 [build-dependencies]
-brotli = "1.2.0"
+brotli = "2.0.1"
 bytesize = "0.2.0"
 failure = "0.1.1"
 heck = "0.3.0"
@@ -15,9 +15,9 @@ vergen = "0.1.1"
 walkdir = "2.1.4"
 
 [dependencies]
-bytes = "0.4.6"
+bytes = "0.4.7"
 failure = "0.1.1"
-futures = "0.2.0"
+futures = "0.2.1"
 futures-await = "0.1.1"
 prost = "0.3.2"
 prost-derive = "0.3.2"
@@ -26,13 +26,9 @@ pulldown-cmark = "0.1.2"
 slog-scope = "4.0.1"
 slog-stdlog = "3.0.2"
 tokio-executor = "0.1.2"
-uuid = "0.6.2"
+uuid = "0.6.3"
 type-info = "0.2.1"
 type-info-derive = "0.2.0"
-
-[dependencies.clippy]
-optional = true
-version = "0.0.193"
 
 [dependencies.semantic]
 path = "semantic"
@@ -49,12 +45,12 @@ version = "2.2.3"
 
 [dependencies.wasm-bindgen]
 git = "https://github.com/alexcrichton/wasm-bindgen"
-rev = "9976971e7e5461a657f605dee08d7fb93e48f0fd"
+rev = "9bab72034fdc5fd1e8ccee52879b033b1f7b5fc8"
 
 [features]
 default = []
 journald = ["slog-journald"]
-lint = ["clippy"]
+lint = []
 standalone = []
 syslog = ["slog-syslog"]
 
@@ -84,7 +80,7 @@ mime = "0.3.5"
 slog-async = "2.3.0"
 slog-json = "2.2.0"
 slog-term = "2.4.0"
-structopt = "0.2.7"
+structopt = "0.2.8"
 tokio = "0.1.5"
 unicase = "2.1.0"
 

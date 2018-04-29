@@ -23,7 +23,7 @@ impl HttpFetchHandler {
     }
 }
 
-#[wasm_bindgen(module = "../rpc/http/ffi")]
+#[wasm_bindgen(module = "./../rpc/http/ffi")]
 extern "C" {
     #[allow(non_snake_case)]
     pub fn performFetch(url: &str, data: &[u8], handler: HttpFetchHandler);

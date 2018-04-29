@@ -7,7 +7,7 @@
 
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(module = "../logger/ffi")]
+#[wasm_bindgen(module = "./../logger/ffi")]
 extern "C" {
     pub fn newObject() -> JsValue;
     pub fn emitUsize(obj: &JsValue, key: &str, val: usize);

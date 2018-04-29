@@ -133,7 +133,7 @@ impl File {
     }
 }
 
-#[wasm_bindgen(module = "../ffi")]
+#[wasm_bindgen(module = "./../ffi")]
 extern "C" {
     #[allow(non_snake_case)]
     fn resolveSemanticEditor(resolve: JsValue, semanticEditor: SemanticEditor);

@@ -1,2 +1,8 @@
 #!/bin/sh -eu
+js=src/wasm/semantic_editor.js
 RUST_BACKTRACE=1 wasm-bindgen target/wasm32-unknown-unknown/release/semantic_editor.wasm --typescript --out-dir src/wasm
+awk '
+  /let slab =/ {print "const self = window;"}
+  {print}
+' "$js" > "$js.new"
+mv "$js.new" "$js"

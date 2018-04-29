@@ -7,7 +7,7 @@
 
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(module = "../executor/sys/wasm/ffi")]
+#[wasm_bindgen(module = "./../executor/sys/wasm/ffi")]
 extern "C" {
     #[allow(non_snake_case)]
     pub fn scheduleMicrotask(microtask: Microtask);
