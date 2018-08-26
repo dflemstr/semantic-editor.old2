@@ -6,7 +6,7 @@ fn main() {
         Ok(()) => (),
         Err(e) => {
             eprintln!("Fatal error: {}", e);
-            for cause in e.causes() {
+            for cause in e.iter_chain() {
                 eprintln!("   caused by {}", cause);
             }
         }

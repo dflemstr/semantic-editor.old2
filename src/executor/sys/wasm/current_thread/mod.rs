@@ -446,7 +446,8 @@ impl<'a, P: Park> Entered<'a, P> {
         let notify = self.executor.scheduler.notify();
 
         loop {
-            let res = self.executor
+            let res = self
+                .executor
                 .borrow()
                 .enter(self.enter, || future.poll_future_notify(&notify, 0));
 

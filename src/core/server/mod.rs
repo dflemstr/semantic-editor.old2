@@ -2,10 +2,9 @@ use bytes;
 use failure;
 use futures;
 use hyper;
-use mime;
 use prost;
 use prost_simple_rpc;
-use unicase;
+use slog;
 
 use futures::prelude::{async, await};
 
@@ -16,26 +15,12 @@ mod standalone;
 
 type RpcError = prost_simple_rpc::error::Error<error::NestedError>;
 
-lazy_static! {
-    static ref REQUEST_CONTENT_TYPE: hyper::header::ContentType = {
-        use std::str::FromStr;
-        hyper::header::ContentType(
-            mime::Mime::from_str("application/x-semantic-editor-request").unwrap(),
-        )
-    };
-    static ref RESPONSE_CONTENT_TYPE: hyper::header::ContentType = {
-        use std::str::FromStr;
-        hyper::header::ContentType(
-            mime::Mime::from_str("application/x-semantic-editor-response").unwrap(),
-        )
-    };
-}
+const REQUEST_CONTENT_TYPE: &str = "application/x-semantic-editor-request";
+const RESPONSE_CONTENT_TYPE: &str = "application/x-semantic-editor-response";
 
-pub struct Server<H>(H);
-
-enum Body {
-    FileStream(standalone::FileStream),
-    Bytes(Option<bytes::Bytes>),
+pub struct Server<H> {
+    log: slog::Logger,
+    handler: H,
 }
 
 struct HandlerHyperService<H> {
@@ -44,55 +29,75 @@ struct HandlerHyperService<H> {
 
 impl<H> Server<H>
 where
-    H: prost_simple_rpc::handler::Handler<Error = RpcError>,
+    H: prost_simple_rpc::handler::Handler<Error = RpcError> + Sync,
 {
-    pub fn new(handler: H) -> Self {
-        Server(handler)
+    pub fn new(log: slog::Logger, handler: H) -> Self {
+        Server { log, handler }
     }
 
     pub fn run(self) -> error::Result<()> {
+        use futures::Future;
+
         let addr = "127.0.0.1:12345".parse()?;
 
-        let server = hyper::server::Http::new().bind(&addr, move || {
-            let handler = self.0.clone();
-            Ok(HandlerHyperService { handler })
-        })?;
-        server.run()?;
+        let server_handler = self.handler.clone();
+        let server = hyper::Server::bind(&addr).serve(move || {
+            let handler = server_handler.clone();
+            HandlerHyperService { handler }
+        });
+
+        let error_log = self.log.clone();
+        hyper::rt::run(server.map_err(move |e| error!(error_log, "server error: {}", e)));
         Ok(())
     }
 }
 
-impl<H> hyper::server::Service for HandlerHyperService<H>
+impl<H> hyper::service::Service for HandlerHyperService<H>
 where
     H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
-    type Request = hyper::server::Request;
-    type Response = hyper::server::Response<Body>;
-    type Error = hyper::Error;
-    type Future = Box<futures::Future<Item = Self::Response, Error = Self::Error>>;
+    type ReqBody = hyper::Body;
+    type ResBody = hyper::Body;
+    type Error = failure::Compat<error::Error>;
+    type Future =
+        Box<futures::Future<Item = hyper::Response<Self::ResBody>, Error = Self::Error> + Send>;
 
-    fn call(&self, req: hyper::server::Request) -> Self::Future {
-        Box::new(call_raw(self.handler.clone(), req))
+    fn call(&mut self, req: hyper::Request<hyper::Body>) -> Self::Future {
+        use futures::Future;
+        Box::new(call_raw(self.handler.clone(), req).map_err(|e| failure::Error::compat(e)))
+    }
+}
+
+impl<H> futures::IntoFuture for HandlerHyperService<H> {
+    type Future = futures::future::FutureResult<Self::Item, Self::Error>;
+    type Item = Self;
+    type Error = failure::Compat<error::Error>;
+
+    fn into_future(self) -> Self::Future {
+        futures::future::ok(self)
     }
 }
 
 #[async]
 fn call_raw<H>(
     handler: H,
-    req: hyper::server::Request,
-) -> Result<hyper::server::Response<Body>, hyper::Error>
+    req: hyper::Request<hyper::Body>,
+) -> error::Result<hyper::Response<hyper::Body>>
 where
     H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
-    if req.method() == &hyper::Method::Options {
-        let response = hyper::server::Response::new().with_status(hyper::StatusCode::Ok);
+    if req.method() == &hyper::Method::OPTIONS {
+        let mut response = hyper::Response::new(hyper::Body::empty());
+        *response.status_mut() = hyper::StatusCode::OK;
         Ok(with_cors_headers(response))
     } else if is_static_file_request(&req) {
         Ok(with_cors_headers(serve_static_file(&req)))
     } else if let Some(request) = await!(parse_rpc_request(req))? {
         await!(handle_request(handler, request))
     } else {
-        Ok(hyper::server::Response::new().with_status(hyper::StatusCode::NotFound))
+        let mut response = hyper::Response::new(hyper::Body::empty());
+        *response.status_mut() = hyper::StatusCode::NOT_FOUND;
+        Ok(response)
     }
 }
 
@@ -100,7 +105,7 @@ where
 fn handle_request<H>(
     handler: H,
     request: transport_proto::Request,
-) -> Result<hyper::server::Response<Body>, hyper::Error>
+) -> error::Result<hyper::Response<hyper::Body>>
 where
     H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
@@ -141,17 +146,19 @@ where
 
 #[async]
 fn parse_rpc_request(
-    req: hyper::server::Request,
-) -> Result<Option<transport_proto::Request>, hyper::Error> {
+    req: hyper::Request<hyper::Body>,
+) -> error::Result<Option<transport_proto::Request>> {
     use futures::Stream;
     use prost::Message;
 
-    if req.headers().get::<hyper::header::ContentType>() != Some(&REQUEST_CONTENT_TYPE) {
+    if req.headers().get(hyper::header::CONTENT_TYPE) != Some(
+        &hyper::header::HeaderValue::from_static(REQUEST_CONTENT_TYPE),
+    ) {
         return Ok(None);
     }
 
     let (path_service_name, path_method_name) = {
-        let parts = req.path().split("/").collect::<Vec<_>>();
+        let parts = req.uri().path().split("/").collect::<Vec<_>>();
         if parts.len() == 3 && parts[0] == "" {
             (parts[1].to_owned(), parts[2].to_owned())
         } else {
@@ -159,7 +166,7 @@ fn parse_rpc_request(
         }
     };
 
-    let body = bytes::Bytes::from(await!(req.body().concat2())?);
+    let body = bytes::Bytes::from(await!(req.into_body().concat2())?);
     if let Some(request) = transport_proto::Request::decode(body).ok() {
         if request.service_name == path_service_name && request.method_name == path_method_name {
             Ok(Some(request))
@@ -171,32 +178,35 @@ fn parse_rpc_request(
     }
 }
 
-fn is_static_file_request(request: &hyper::server::Request) -> bool {
-    standalone::file_exists(canonicalize_path(request.path()))
+fn is_static_file_request(request: &hyper::Request<hyper::Body>) -> bool {
+    standalone::file_exists(canonicalize_path(request.uri().path()))
 }
 
-fn serve_static_file(request: &hyper::server::Request) -> hyper::server::Response<Body> {
-    let path = canonicalize_path(request.path());
+fn serve_static_file(request: &hyper::Request<hyper::Body>) -> hyper::Response<hyper::Body> {
+    let path = canonicalize_path(request.uri().path());
 
     if request
         .headers()
-        .get::<hyper::header::AcceptEncoding>()
-        .map(|e| e.iter().any(|i| i.item == hyper::header::Encoding::Brotli))
+        .get(hyper::header::ACCEPT_ENCODING)
+        .map(|h| h.to_str().map(|s| s.contains("br")).unwrap_or(false))
         .unwrap_or(false)
     {
         let data = standalone::brotli_compressed_file(path).unwrap();
-        hyper::server::Response::new()
-            .with_status(hyper::StatusCode::Ok)
-            .with_header(hyper::header::ContentEncoding(vec![
-                hyper::header::Encoding::Brotli,
-            ]))
-            .with_body(Body::FileStream(data.contents))
+        let mut response = hyper::Response::new(hyper::Body::wrap_stream(data.contents));
+        *response.status_mut() = hyper::StatusCode::OK;
+        response.headers_mut().insert(
+            hyper::header::CONTENT_ENCODING,
+            hyper::header::HeaderValue::from_static("br"),
+        );
+        response
     } else {
         let data = standalone::file(path).unwrap();
-        hyper::server::Response::new()
-            .with_status(hyper::StatusCode::Ok)
-            .with_header(hyper::header::ContentLength(data.size))
-            .with_body(Body::FileStream(data.contents))
+        let mut response = hyper::Response::new(hyper::Body::wrap_stream(data.contents));
+        *response.status_mut() = hyper::StatusCode::OK;
+        response
+            .headers_mut()
+            .insert(hyper::header::CONTENT_LENGTH, data.size.into());
+        response
     }
 }
 
@@ -208,26 +218,36 @@ fn canonicalize_path(path: &str) -> &str {
     }
 }
 
-fn hyper_response(response: transport_proto::Response) -> hyper::server::Response<Body> {
+fn hyper_response(response: transport_proto::Response) -> hyper::Response<hyper::Body> {
     let data = encode(response).unwrap();
-    with_cors_headers(
-        hyper::server::Response::new()
-            .with_status(hyper::StatusCode::Ok)
-            .with_header(RESPONSE_CONTENT_TYPE.clone())
-            .with_header(hyper::header::ContentLength(data.len() as u64))
-            .with_body(Body::Bytes(Some(data))),
-    )
+    let len = data.len();
+    let mut response = hyper::Response::new(data.into());
+    *response.status_mut() = hyper::StatusCode::OK;
+    response.headers_mut().insert(
+        hyper::header::CONTENT_TYPE,
+        hyper::header::HeaderValue::from_static(RESPONSE_CONTENT_TYPE),
+    );
+    response
+        .headers_mut()
+        .insert(hyper::header::CONTENT_LENGTH, len.into());
+
+    with_cors_headers(response)
 }
 
-fn with_cors_headers<B>(response: hyper::server::Response<B>) -> hyper::server::Response<B> {
+fn with_cors_headers<B>(mut response: hyper::Response<B>) -> hyper::Response<B> {
+    response.headers_mut().insert(
+        hyper::header::ACCESS_CONTROL_ALLOW_ORIGIN,
+        hyper::header::HeaderValue::from_static("*"),
+    );
+    response.headers_mut().insert(
+        hyper::header::ACCESS_CONTROL_ALLOW_METHODS,
+        hyper::header::HeaderValue::from_static("POST"),
+    );
+    response.headers_mut().insert(
+        hyper::header::ACCESS_CONTROL_ALLOW_HEADERS,
+        hyper::header::HeaderValue::from_static("*"),
+    );
     response
-        .with_header(hyper::header::AccessControlAllowOrigin::Any)
-        .with_header(hyper::header::AccessControlAllowMethods(vec![
-            hyper::Method::Post,
-        ]))
-        .with_header(hyper::header::AccessControlAllowHeaders(vec![
-            unicase::Ascii::new("*".to_owned()),
-        ]))
 }
 
 fn data_response(request_id: Vec<u8>, data: Vec<u8>) -> transport_proto::Response {
@@ -286,16 +306,4 @@ where
     let mut buf = ::bytes::BytesMut::with_capacity(len);
     prost::Message::encode(&message, &mut buf)?;
     Ok(buf.freeze())
-}
-
-impl futures::Stream for Body {
-    type Item = bytes::Bytes;
-    type Error = hyper::Error;
-
-    fn poll(&mut self) -> futures::Poll<Option<Self::Item>, Self::Error> {
-        match *self {
-            Body::FileStream(ref mut stream) => stream.poll(),
-            Body::Bytes(ref mut bytes) => Ok(futures::Async::Ready(bytes.take())),
-        }
-    }
 }

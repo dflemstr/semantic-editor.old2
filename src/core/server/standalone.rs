@@ -2,8 +2,10 @@ use std::io;
 
 use brotli_decompressor;
 use bytes;
+use failure;
 use futures;
-use hyper;
+
+use error;
 
 pub struct File {
     pub name: &'static str,
@@ -60,7 +62,7 @@ impl File {
 
 impl futures::stream::Stream for FileStream {
     type Item = bytes::Bytes;
-    type Error = hyper::Error;
+    type Error = failure::Compat<error::Error>;
 
     fn poll(&mut self) -> futures::Poll<Option<Self::Item>, Self::Error> {
         match *self {
@@ -70,7 +72,7 @@ impl futures::stream::Stream for FileStream {
 
                 let mut bytes = bytes::BytesMut::with_capacity(4096);
                 match decompressor.read(&mut bytes) {
-                    Err(e) => Err(hyper::Error::Io(e)),
+                    Err(e) => Err(error::Error::from(e).compat()),
                     Ok(len) => if len == 0 {
                         Ok(futures::Async::Ready(None))
                     } else {
@@ -87,4 +89,4 @@ impl futures::stream::Stream for FileStream {
 include!(concat!(env!("OUT_DIR"), "/core.standalone.rs"));
 
 #[cfg(not(feature = "standalone"))]
-const FILES: &'static [(&'static str, &'static [u8], u64)] = &[];
+const FILES: &[(&str, &[u8], u64)] = &[];

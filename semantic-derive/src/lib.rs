@@ -29,7 +29,7 @@ pub fn semantic(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     gen.into()
 }
 
-fn impl_semantic(ast: syn::DeriveInput) -> quote::Tokens {
+fn impl_semantic(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let mut attributes = Attributes::new();
     attributes.set_from_attrs(ast.attrs.as_slice());
@@ -49,12 +49,15 @@ fn impl_semantic(ast: syn::DeriveInput) -> quote::Tokens {
         })
         .unwrap_or(quote!());
 
-    let role = syn::Ident::from(format!(
-        "{:?}",
-        attributes
-            .role
-            .expect("missing role attribute, like #[semantic(role = \"...\")]")
-    ));
+    let role = syn::Ident::new(
+        &format!(
+            "{:?}",
+            attributes
+                .role
+                .expect("missing role attribute, like #[semantic(role = \"...\")]")
+        ),
+        ast.ident.span(),
+    );
 
     quote! {
         impl ::semantic::Semantic for #name {
@@ -76,12 +79,12 @@ fn impl_semantic(ast: syn::DeriveInput) -> quote::Tokens {
 }
 
 struct InferredStructure {
-    structure: quote::Tokens,
-    visit_classes: Option<quote::Tokens>,
+    structure: proc_macro2::TokenStream,
+    visit_classes: Option<proc_macro2::TokenStream>,
 }
 
 fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
-    let name = ast.ident.as_ref();
+    let name = ast.ident.to_string();
     match ast.data {
         syn::Data::Struct(syn::DataStruct {
             fields: syn::Fields::Unit,
@@ -94,7 +97,7 @@ fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
         }),
         syn::Data::Struct(syn::DataStruct { ref fields, .. }) => {
             let field_attributes = struct_field_attributes(fields);
-            let field_names = field_attributes.iter().map(|f| f.ident.as_ref());
+            let field_names = field_attributes.iter().map(|f| f.ident.to_string());
             let field_types1 = field_attributes.iter().map(|f| &f.ty);
             let field_types2 = field_attributes.iter().map(|f| &f.ty);
             let field_types3 = field_attributes.iter().map(|f| &f.ty);
@@ -125,7 +128,7 @@ fn infer_structure(ast: &syn::DeriveInput) -> Option<InferredStructure> {
         syn::Data::Enum(syn::DataEnum { ref variants, .. }) => {
             if variants.iter().all(is_union_variant) {
                 let variant_attributes = enum_union_variant_attributes(variants.iter());
-                let variant_names = variant_attributes.iter().map(|f| f.ident.as_ref());
+                let variant_names = variant_attributes.iter().map(|f| f.ident.to_string());
                 let variant_types1 = variant_attributes.iter().map(|f| &f.ty);
                 let variant_types2 = variant_attributes.iter().map(|f| &f.ty);
                 let variant_types3 = variant_attributes.iter().map(|f| &f.ty);
@@ -177,11 +180,10 @@ where
     fields
         .filter(|f| f.ident.is_some())
         .map(|f| {
-            let mut result = FieldAttributes::new(f.ident.unwrap().clone(), f.ty.clone());
+            let mut result = FieldAttributes::new(f.ident.as_ref().unwrap().clone(), f.ty.clone());
             result.set_from_attrs(f.attrs.as_slice());
             result
-        })
-        .collect()
+        }).collect()
 }
 
 fn enum_union_variant_attributes<'a, I>(variants: I) -> Vec<VariantAttributes>
@@ -190,7 +192,7 @@ where
 {
     variants
         .map(|v| VariantAttributes {
-            ident: v.ident,
+            ident: v.ident.clone(),
             ty: match v.fields {
                 syn::Fields::Unnamed(syn::FieldsUnnamed { ref unnamed, .. }) => {
                     // We have already established that this is an union enum, so this should be
@@ -199,8 +201,7 @@ where
                 }
                 _ => unreachable!(),
             },
-        })
-        .collect()
+        }).collect()
 }
 
 impl Attributes {
@@ -215,7 +216,9 @@ impl Attributes {
             for meta_item in meta_items {
                 match meta_item {
                     Meta(syn::Meta::NameValue(ref m)) if m.ident == "role" => {
-                        if let Ok(s) = get_lit_str(m.ident.as_ref(), m.ident.as_ref(), &m.lit) {
+                        if let Ok(s) =
+                            get_lit_str(&m.ident.to_string(), &m.ident.to_string(), &m.lit)
+                        {
                             let value = s.value();
                             match value.parse() {
                                 Ok(role) => self.role = Some(role),

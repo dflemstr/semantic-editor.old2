@@ -21,10 +21,9 @@ fn main() {
                 "src/schema/se/transport/transport.proto",
             ],
             &["src/schema"],
-        )
-        .unwrap();
+        ).unwrap();
 
-    vergen::vergen(vergen::OutputFns::all()).unwrap();
+    vergen::vergen(vergen::ConstantsFlags::all()).unwrap();
 
     if cfg!(feature = "standalone") {
         let build_dir =
@@ -42,10 +41,7 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
 
     let mut data_rs_file = fs::File::create(out_dir.join("core.standalone.rs"))?;
 
-    writeln!(
-        data_rs_file,
-        "const FILES: &'static [(&'static str, &'static [u8], u64)] = &["
-    )?;
+    writeln!(data_rs_file, "const FILES: &[(&str, &[u8], u64)] = &[")?;
 
     for entry in walkdir::WalkDir::new(build_dir) {
         let entry = entry?;
@@ -90,11 +86,25 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
                 bytesize::ByteSize::b(compressed_metadata.len() as u64),
             );
 
+            let size = format!("{}", in_size)
+                .chars()
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .enumerate()
+                .rev()
+                .flat_map(|(i, d)| {
+                    if i > 0 && i % 3 == 0 {
+                        vec![d, '_']
+                    } else {
+                        vec![d]
+                    }
+                }).collect::<String>();
             writeln!(data_rs_file,
-            r#"    ({relative_path:?}, include_bytes!(concat!(env!("OUT_DIR"), {data_path:?})), {size}),"#,
-            relative_path = relative_path,
-            data_path = path::Path::new("/standalone").join(with_brotli_extension(&relative_path)),
-            size = in_size)?
+                     r#"    ({relative_path:?}, include_bytes!(concat!(env!("OUT_DIR"), {data_path:?})), {size}),"#,
+                     relative_path = relative_path,
+                     data_path = path::Path::new("/standalone").join(with_brotli_extension(&relative_path)),
+                     size = size)?
         }
     }
     writeln!(data_rs_file, "];")?;
@@ -102,7 +112,10 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
 }
 
 fn with_brotli_extension(path: &path::Path) -> path::PathBuf {
-    path.with_extension(&path.extension()
-        .map(|e| format!("{}.br", e.to_string_lossy()))
-        .unwrap_or_else(|| "br".to_owned()))
+    path.with_extension(
+        &path
+            .extension()
+            .map(|e| format!("{}.br", e.to_string_lossy()))
+            .unwrap_or_else(|| "br".to_owned()),
+    )
 }

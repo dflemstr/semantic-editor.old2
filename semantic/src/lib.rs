@@ -16,7 +16,6 @@ pub trait Semantic: DynamicSemantic {
 }
 
 pub trait DynamicSemantic: any::Any + fmt::Debug {
-    #[inline]
     fn class(&self) -> Class<'static>;
 }
 

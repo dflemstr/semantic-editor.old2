@@ -7,6 +7,7 @@ use error;
 use schema::se::service as service_proto;
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "cargo-clippy", allow(stutter))]
 pub struct SemanticEditor {
     log: slog::Logger,
 }
@@ -48,10 +49,9 @@ impl service_proto::SemanticEditor for SemanticEditor {
                                 path: entry.path().to_string_lossy().into_owned(),
                                 kind: to_kind(entry.file_type()?),
                             })
-                        })
-                        .collect(),
+                        }).collect(),
                 ).map(|file| service_proto::ListFilesResponse { file })
-                    .map_err(error::nested_error),
+                .map_err(error::nested_error),
             ),
             Err(err) => Box::new(futures::future::err(error::nested_error(
                 error::Error::from(err),

@@ -7,8 +7,8 @@ include!(concat!(env!("OUT_DIR"), "/version.rs"));
 
 pub fn init(log: slog::Logger) -> slog::Logger {
     let log = log.new(o!(
-        "version" => format!(concat!(env!("CARGO_PKG_VERSION"), "-{}"), short_sha()),
-        "target" => target(),
+        "version" => format!(concat!(env!("CARGO_PKG_VERSION"), "-{}"), VERGEN_SHA_SHORT),
+        "target" => VERGEN_TARGET_TRIPLE,
     ));
 
     info!(
@@ -18,10 +18,10 @@ pub fn init(log: slog::Logger) -> slog::Logger {
             env!("CARGO_PKG_NAME"),
             " version ",
             env!("CARGO_PKG_VERSION"), "-{}"
-        ), short_sha();
+        ), VERGEN_SHA_SHORT;
         "name" => env!("CARGO_PKG_NAME"),
-        "created" => commit_date(),
-        "built" => now(),
+        "created" => VERGEN_COMMIT_DATE,
+        "built" => VERGEN_BUILD_TIMESTAMP,
     );
 
     log

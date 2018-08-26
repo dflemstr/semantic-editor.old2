@@ -70,13 +70,15 @@ impl SemanticEditor {
         use schema::se::service::SemanticEditor;
 
         let path = path.to_owned();
-        let future = self.client
+        let future = self
+            .client
             .list_files(service::ListFilesRequest { path })
             .map(move |r| {
                 resolveFileListing(
                     resolve,
                     FileListing {
-                        files: r.file
+                        files: r
+                            .file
                             .into_iter()
                             .map(|f| File {
                                 path: f.path.to_owned(),
@@ -92,12 +94,10 @@ impl SemanticEditor {
                                     )) => true,
                                     _ => false,
                                 },
-                            })
-                            .collect(),
+                            }).collect(),
                     },
                 )
-            })
-            .map_err(move |e| rejectFileListing(reject, &e.to_string()));
+            }).map_err(move |e| rejectFileListing(reject, &e.to_string()));
 
         executor::run(future);
     }

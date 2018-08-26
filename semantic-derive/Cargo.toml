@@ -5,9 +5,9 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-proc-macro2 = {version = "0.3.1", features = ["nightly"]}
-quote = "0.4.2"
-syn = "0.12.13"
+proc-macro2 = { version = "0.4.13", features = ["nightly"] }
+quote = "0.6.8"
+syn = "0.14.9"
 
 [dependencies.semantic]
 path = "../semantic"

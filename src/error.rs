@@ -23,7 +23,7 @@ pub fn nested_error(error: Error) -> NestedError {
 
 impl failure::Fail for NestedError {
     fn cause(&self) -> Option<&failure::Fail> {
-        Some(self.0.cause())
+        Some(self.0.as_fail())
     }
 
     fn backtrace(&self) -> Option<&failure::Backtrace> {

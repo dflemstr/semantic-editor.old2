@@ -8,12 +8,6 @@
 #![feature(const_type_id)]
 #![feature(generators)]
 #![feature(nll)]
-#![feature(proc_macro)]
-#![feature(wasm_import_module)]
-#![feature(wasm_custom_section)]
-// Blocked on https://github.com/rust-lang-nursery/rust-clippy/issues/2560
-// #![cfg_attr(feature = "lint", feature(plugin))]
-// #![cfg_attr(feature = "lint", plugin(clippy))]
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 #![deny(missing_copy_implementations)]
@@ -23,6 +17,8 @@
 #![deny(unused_import_braces)]
 #![deny(unused_qualifications)]
 #![deny(non_camel_case_types)]
+#![cfg_attr(feature = "cargo-clippy", deny(clippy))]
+#![cfg_attr(feature = "cargo-clippy", deny(clippy_pedantic))]
 
 #[cfg(not(target_arch = "wasm32"))]
 extern crate brotli_decompressor;
@@ -31,11 +27,6 @@ extern crate failure;
 extern crate futures_await as futures;
 #[cfg(not(target_arch = "wasm32"))]
 extern crate hyper;
-#[cfg(not(target_arch = "wasm32"))]
-#[macro_use]
-extern crate lazy_static;
-#[cfg(not(target_arch = "wasm32"))]
-extern crate mime;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
@@ -65,8 +56,6 @@ extern crate tokio_executor;
 extern crate type_info;
 #[macro_use]
 extern crate type_info_derive;
-#[cfg(not(target_arch = "wasm32"))]
-extern crate unicase;
 extern crate uuid;
 extern crate wasm_bindgen;
 
