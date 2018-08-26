@@ -30,9 +30,12 @@
     "build:wasm-bindgen": "scripts/run-wasm-bindgen",
     "build:wasm2es6js": "scripts/run-wasm2es6js",
     "build:react": "react-app-rewired build",
-    "test": "npm-run-all test:cargo test:react",
-    "test:cargo": "cargo test",
-    "test:react": "react-app-rewired test --env=jsdom"
+    "test": "npm-run-all test:cargo-test test:cargo-fmt test:react",
+    "test:cargo-test": "cargo test --all",
+    "test:cargo-fmt": "cargo fmt --all -- --check",
+    "test:react": "react-app-rewired test --env=jsdom",
+    "precommit": "npm test",
+    "prepush": "npm test"
   },
   "devDependencies": {
     "@types/jasmine": "^2.8.3",
@@ -40,6 +43,7 @@
     "@types/react-dom": "^16.0.4",
     "@types/react-transition-group": "^2.0.7",
     "@types/uuid": "^3.4.3",
+    "husky": "^0.14.3",
     "npm-run-all": "^4.1.2",
     "react-app-rewire-typescript": "^2.0.2",
     "react-app-rewired": "^1.5.0",
