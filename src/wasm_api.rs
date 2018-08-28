@@ -6,20 +6,22 @@
 
 use std::panic;
 
+use js_sys;
 use slog_scope;
 use slog_stdlog;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures;
 
-use executor;
 use logger;
 use rpc;
 use schema::se::service;
 use version;
 
 #[wasm_bindgen]
-#[derive(Debug)]
+#[allow(missing_debug_implementations)]
 pub struct SemanticEditor {
     client: service::SemanticEditorClient<rpc::RpcClient<service::SemanticEditorDescriptor>>,
+    _log_guard: slog_scope::GlobalLoggerGuard,
 }
 
 #[wasm_bindgen]
@@ -38,11 +40,11 @@ pub struct File {
 
 #[wasm_bindgen]
 impl SemanticEditor {
-    pub fn new(url: &str, resolve: JsValue, reject: JsValue) {
+    pub fn new(url: &str) -> js_sys::Promise {
         use futures::Future;
 
         let log = logger::init();
-        slog_scope::set_global_logger(log.clone()).cancel_reset();
+        let log_guard = slog_scope::set_global_logger(log.clone());
         slog_stdlog::init().unwrap();
 
         let log = version::init(log);
@@ -58,14 +60,17 @@ impl SemanticEditor {
 
         let future = rpc::RpcClient::new(log, url.to_owned())
             .map(|rpc| service::SemanticEditorClient::new(rpc))
-            .map(|client| SemanticEditor { client })
-            .map(|semantic_editor| resolveSemanticEditor(resolve, semantic_editor))
-            .map_err(|err| rejectSemanticEditor(reject, &err.to_string()));
+            .map(|client| {
+                SemanticEditor {
+                    client,
+                    _log_guard: log_guard,
+                }.into()
+            }).map_err(|e| e.to_string().into());
 
-        executor::run(future);
+        wasm_bindgen_futures::future_to_promise(future)
     }
 
-    pub fn list_files(&self, path: &str, resolve: JsValue, reject: JsValue) {
+    pub fn list_files(&self, path: &str) -> js_sys::Promise {
         use futures::Future;
         use schema::se::service::SemanticEditor;
 
@@ -74,32 +79,27 @@ impl SemanticEditor {
             .client
             .list_files(service::ListFilesRequest { path })
             .map(move |r| {
-                resolveFileListing(
-                    resolve,
-                    FileListing {
-                        files: r
-                            .file
-                            .into_iter()
-                            .map(|f| File {
-                                path: f.path.to_owned(),
-                                is_regular: match f.kind {
-                                    Some(service::list_files_response::file::Kind::Regular(_)) => {
-                                        true
-                                    }
-                                    _ => false,
-                                },
-                                is_directory: match f.kind {
-                                    Some(service::list_files_response::file::Kind::Directory(
-                                        _,
-                                    )) => true,
-                                    _ => false,
-                                },
-                            }).collect(),
-                    },
-                )
-            }).map_err(move |e| rejectFileListing(reject, &e.to_string()));
+                FileListing {
+                    files: r
+                        .file
+                        .into_iter()
+                        .map(|f| File {
+                            path: f.path.to_owned(),
+                            is_regular: match f.kind {
+                                Some(service::list_files_response::file::Kind::Regular(_)) => true,
+                                _ => false,
+                            },
+                            is_directory: match f.kind {
+                                Some(service::list_files_response::file::Kind::Directory(_)) => {
+                                    true
+                                }
+                                _ => false,
+                            },
+                        }).collect(),
+                }.into()
+            }).map_err(|e| e.to_string().into());
 
-        executor::run(future);
+        wasm_bindgen_futures::future_to_promise(future)
     }
 }
 

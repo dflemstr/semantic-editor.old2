@@ -27,6 +27,7 @@ extern crate failure;
 extern crate futures_await as futures;
 #[cfg(not(target_arch = "wasm32"))]
 extern crate hyper;
+extern crate js_sys;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
@@ -58,12 +59,12 @@ extern crate type_info;
 extern crate type_info_derive;
 extern crate uuid;
 extern crate wasm_bindgen;
+extern crate wasm_bindgen_futures;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod core;
 pub mod data;
 pub mod error;
-pub mod executor;
 pub mod logger;
 pub mod rpc;
 pub mod schema;
