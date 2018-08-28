@@ -39,6 +39,8 @@
     "@types/react": "^16.4.12",
     "@types/react-dom": "^16.0.4",
     "@types/react-transition-group": "^2.0.7",
+    "@types/slate": "^0.33.4",
+    "@types/slate-react": "^0.12.3",
     "@types/uuid": "^3.4.3",
     "@types/webassembly-js-api": "^0.0.1",
     "eslint": "^5.4.0",

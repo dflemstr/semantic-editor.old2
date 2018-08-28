@@ -1423,6 +1423,20 @@
     "@types/prop-types" "*"
     csstype "^2.2.0"
 
+"@types/slate-react@^0.12.3":
+  version "0.12.3"
+  resolved "https://registry.yarnpkg.com/@types/slate-react/-/slate-react-0.12.3.tgz#6a5f0b2d85cbe2ad5602428df285601e32066486"
+  dependencies:
+    "@types/react" "*"
+    "@types/slate" "*"
+    immutable "^3.8.2"
+
+"@types/slate@*", "@types/slate@^0.33.4":
+  version "0.33.4"
+  resolved "https://registry.yarnpkg.com/@types/slate/-/slate-0.33.4.tgz#593f8e7c3e48cd8e9490174fa60abf9da3d7ed74"
+  dependencies:
+    immutable "^3.8.2"
+
 "@types/uuid@^3.4.3":
   version "3.4.3"
   resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-3.4.3.tgz#121ace265f5569ce40f4f6d0ff78a338c732a754"
