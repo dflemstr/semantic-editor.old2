@@ -1,4 +1,4 @@
-import { Button, Menu, Popover, Position } from "@blueprintjs/core";
+import { Button, Menu, Popover, Position, Classes } from "@blueprintjs/core";
 import * as React from "react";
 
 interface Props {
@@ -11,7 +11,7 @@ export default class NavbarMenu extends React.PureComponent<Props> {
       <Menu>
         {this.props.children}
       </Menu>} position={Position.BOTTOM_LEFT}>
-      <Button className="pt-minimal" text={this.props.title}/>
+      <Button className={Classes.MINIMAL} text={this.props.title}/>
     </Popover>;
   }
 }
