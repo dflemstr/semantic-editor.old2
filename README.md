@@ -23,7 +23,6 @@ To develop on `semantic-editor`, you need to install:
   - node.js, at least version 8.9.4 (<https://nodejs.org/>)
   - The `yarn` build tool for node (<https://yarnpkg.com/>)
   - `wasm-bindgen` from <https://github.com/alexcrichton/wasm-bindgen>
-  - `wasm-gc` via `cargo install wasm-gc`
   - `cargo-watch` via `cargo install cargo-watch` (only needed for development)
 
 Starting the application should be as simple as doing `yarn start`.  It probably takes a while to

@@ -1,3 +1,0 @@
-#!/bin/sh -eu
-RUST_BACKTRACE=1 wasm-gc target/wasm32-unknown-unknown/release/semantic_editor.wasm target/wasm32-unknown-unknown/release/semantic_editor_gc.wasm
-mv target/wasm32-unknown-unknown/release/semantic_editor_gc.wasm target/wasm32-unknown-unknown/release/semantic_editor.wasm
