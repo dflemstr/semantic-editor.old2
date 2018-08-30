@@ -1,27 +1,10 @@
-import { SemanticEditor } from './wasm/semantic_editor'
+import { SemanticEditor as NativeSemanticEditor } from './wasm/semantic_editor'
+import { FileMetadata } from './model'
 
-export * from './wasm/semantic_editor'
+const NATIVE: Promise<NativeSemanticEditor> = NativeSemanticEditor.new('http://localhost:12345')
 
-const init = async (): Promise<SemanticEditor> => {
-  const editor = await SemanticEditor.new('http://localhost:12345')
-  const files = await editor.list_files('/')
-  try {
-    for (let i = 0; i < files.fileLength(); i++) {
-      const file = files.file(i)
-      try {
-        console.log({
-          path: file.path(),
-          isRegular: file.isRegular(),
-          isDirectory: file.isDirectory()
-        })
-      } finally {
-        file.free()
-      }
-    }
-  } finally {
-    files.free()
+export default class SemanticEditor {
+  static fetchFileMetadata(path: string): Promise<FileMetadata> {
+
   }
-  return editor
 }
-
-export default init

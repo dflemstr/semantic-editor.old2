@@ -27,6 +27,14 @@ struct HandlerHyperService<H> {
     handler: H,
 }
 
+#[derive(Debug)]
+struct Request {
+    id: Vec<u8>,
+    data: Vec<u8>,
+    service_name: String,
+    method_name: String,
+}
+
 impl<H> Server<H>
 where
     H: prost_simple_rpc::handler::Handler<Error = RpcError> + Sync,
@@ -102,10 +110,7 @@ where
 }
 
 #[async]
-fn handle_request<H>(
-    handler: H,
-    request: transport_proto::Request,
-) -> error::Result<hyper::Response<hyper::Body>>
+fn handle_request<H>(handler: H, request: Request) -> error::Result<hyper::Response<hyper::Body>>
 where
     H: prost_simple_rpc::handler::Handler<Error = RpcError>,
 {
@@ -145,19 +150,18 @@ where
 }
 
 #[async]
-fn parse_rpc_request(
-    req: hyper::Request<hyper::Body>,
-) -> error::Result<Option<transport_proto::Request>> {
+fn parse_rpc_request(req: hyper::Request<hyper::Body>) -> error::Result<Option<Request>> {
     use futures::Stream;
     use prost::Message;
 
-    if req.headers().get(hyper::header::CONTENT_TYPE) != Some(
-        &hyper::header::HeaderValue::from_static(REQUEST_CONTENT_TYPE),
-    ) {
+    if req.headers().get(hyper::header::CONTENT_TYPE)
+        != Some(&hyper::header::HeaderValue::from_static(
+            REQUEST_CONTENT_TYPE,
+        )) {
         return Ok(None);
     }
 
-    let (path_service_name, path_method_name) = {
+    let (service_name, method_name) = {
         let parts = req.uri().path().split("/").collect::<Vec<_>>();
         if parts.len() == 3 && parts[0] == "" {
             (parts[1].to_owned(), parts[2].to_owned())
@@ -168,11 +172,14 @@ fn parse_rpc_request(
 
     let body = bytes::Bytes::from(await!(req.into_body().concat2())?);
     if let Some(request) = transport_proto::Request::decode(body).ok() {
-        if request.service_name == path_service_name && request.method_name == path_method_name {
-            Ok(Some(request))
-        } else {
-            Ok(None)
-        }
+        let id = request.id;
+        let data = request.data;
+        Ok(Some(Request {
+            id,
+            data,
+            service_name,
+            method_name,
+        }))
     } else {
         Ok(None)
     }

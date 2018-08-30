@@ -28,9 +28,10 @@ tokio-executor = "0.1.4"
 uuid = "0.6.5"
 type-info = "0.2.1"
 type-info-derive = "0.2.0"
-wasm-bindgen = "0.2.17"
+wasm-bindgen = "0.2.19"
 wasm-bindgen-futures = "0.2.19"
 js-sys = "0.2.4"
+chrono = "0.4.6"
 
 [dependencies.semantic]
 path = "semantic"
@@ -43,7 +44,7 @@ features = [
     "max_level_trace",
     "release_max_level_trace",
 ]
-version = "2.3.2"
+version = "2.3.3"
 
 [features]
 default = []

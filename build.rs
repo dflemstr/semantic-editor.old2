@@ -21,7 +21,8 @@ fn main() {
                 "src/schema/se/transport/transport.proto",
             ],
             &["src/schema"],
-        ).unwrap();
+        )
+        .unwrap();
 
     vergen::vergen(vergen::ConstantsFlags::all()).unwrap();
 
@@ -99,7 +100,8 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
                     } else {
                         vec![d]
                     }
-                }).collect::<String>();
+                })
+                .collect::<String>();
             writeln!(data_rs_file,
                      r#"    ({relative_path:?}, include_bytes!(concat!(env!("OUT_DIR"), {data_path:?})), {size}),"#,
                      relative_path = relative_path,
@@ -112,10 +114,7 @@ fn create_bundle(build_dir: &path::Path, out_dir: &path::Path) -> Result<(), fai
 }
 
 fn with_brotli_extension(path: &path::Path) -> path::PathBuf {
-    path.with_extension(
-        &path
-            .extension()
-            .map(|e| format!("{}.br", e.to_string_lossy()))
-            .unwrap_or_else(|| "br".to_owned()),
-    )
+    path.with_extension(&path.extension()
+        .map(|e| format!("{}.br", e.to_string_lossy()))
+        .unwrap_or_else(|| "br".to_owned()))
 }

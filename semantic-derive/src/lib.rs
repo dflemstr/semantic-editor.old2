@@ -42,7 +42,9 @@ fn impl_semantic(ast: syn::DeriveInput) -> proc_macro2::TokenStream {
     let visit_classes = visit_classes
         .map(|v| {
             quote! {
-                fn visit_classes<F>(visitor: &mut F) where F: FnMut(&'static ::semantic::Class<'static>) -> bool {
+                fn visit_classes<F>(visitor: &mut F)
+                    where F: FnMut(&'static ::semantic::Class<'static>) -> bool
+                {
                     #v
                 }
             }
@@ -183,7 +185,8 @@ where
             let mut result = FieldAttributes::new(f.ident.as_ref().unwrap().clone(), f.ty.clone());
             result.set_from_attrs(f.attrs.as_slice());
             result
-        }).collect()
+        })
+        .collect()
 }
 
 fn enum_union_variant_attributes<'a, I>(variants: I) -> Vec<VariantAttributes>
@@ -201,7 +204,8 @@ where
                 }
                 _ => unreachable!(),
             },
-        }).collect()
+        })
+        .collect()
 }
 
 impl Attributes {

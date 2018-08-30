@@ -67,8 +67,7 @@ where
         let request = transport_proto::Request {
             id: id.as_bytes().to_vec(),
             data: input.to_vec(),
-            service_name: format!("{}.{}", D::package(), D::proto_name()),
-            method_name: method.proto_name().to_owned(),
+            ..transport_proto::Request::default()
         };
         debug!(log, "Sending request";
         "request" => format!("{:?}", request));
@@ -78,8 +77,11 @@ where
         prost::Message::encode(&request, &mut buffer).unwrap();
 
         let url = format!(
-            "{}/{}/{}",
-            self.base_url, request.service_name, request.method_name
+            "{}/{}.{}/{}",
+            self.base_url,
+            D::package(),
+            D::proto_name(),
+            method.proto_name()
         );
 
         let (tx, rx) = oneshot::channel();

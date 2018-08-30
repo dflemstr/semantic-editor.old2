@@ -8,9 +8,11 @@ message Request {
   bytes id = 1;
   // The request data payload.
   bytes data = 2;
-  // The RPC service being called.
+  // The RPC service being called.  Only set for transports that can't communicate this information
+  // out-of-band.
   string service_name = 3;
-  // The RPC method being called.
+  // The RPC method being called.  Only set for transports that can't communicate this information
+  // out-of-band.
   string method_name = 4;
 }
 
